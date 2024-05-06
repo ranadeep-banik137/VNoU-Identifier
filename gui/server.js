@@ -4,7 +4,7 @@ const fs = require('fs');
 const app = express();
 const upload = multer({ dest: 'gui/uploads/' });
 const path = require('path')
-app.use(express.static('public'));
+app.use(express.static('.'));
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -19,7 +19,7 @@ app.post('/register', upload.single('imageUpload'), function (req, res, next) {
     const imagePath = req.file.path;
     const originalExtension = path.extname(req.file.originalname);
 
-    const newPath = `C:/Users/ranad/OneDrive/Documents/GitHub/face_recognition_prog/gui/uploads/${firstName}-${lastName}-001${originalExtension}`;
+    const newPath = `D:/Projects/VNoU-Identifier/gui/uploads/${firstName}-${lastName}-001${originalExtension}`;
     fs.rename(imagePath, newPath, function(err) {
         if (err) throw err;
         console.log('File Renamed!');
