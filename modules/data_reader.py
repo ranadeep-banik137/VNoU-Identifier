@@ -1,5 +1,6 @@
 import os
 import shutil
+import logging
 
 
 def read_file(filename=f'{os.getenv("PROJECT_PATH") or ""}data/database.csv'):
@@ -25,6 +26,7 @@ def get_available_image(index):
 
 def convertToBinaryData(filename):
     # Convert digital data to binary format
+    logging.info(f'Converting the img in location : {filename} to binary')
     with open(filename, 'rb') as file:
         binaryData = file.read()
     return binaryData
@@ -42,3 +44,10 @@ def remove_file(filename):
 
 def get_file_names(folder_path=f'{os.getenv("PROJECT_PATH") or ""}img'):
     return [file_name for file_name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file_name))]
+
+
+def is_img_file(file_path):
+    flag = False
+    if (os.path.basename(file_path) in ['.jpg', '.jpeg', '.png', '.img']):
+        flag = True
+    return flag

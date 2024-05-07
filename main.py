@@ -1,7 +1,7 @@
 # from modules.face_identifier2 import encode_face
 import logging
 import os
-from modules.face_identifier import encode_face, delete_similar_images
+from modules.face_identifier import encode_face
 from modules.database import insert_table_data, fetch_table_data_in_tuples, fetch_last_user_id
 from modules.data_reader import read_file, convertToBinaryData
 
