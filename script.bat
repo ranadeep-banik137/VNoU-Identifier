@@ -22,7 +22,7 @@ start cmd /k "nodemon gui/server.js"
 echo Starting the server....
 
 echo Opening Google Chrome...
-start "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" http://localhost:9000
+start "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" http://localhost:1100
 echo Link VnoU-Identifier opened in Google Chrome
 
 pause
