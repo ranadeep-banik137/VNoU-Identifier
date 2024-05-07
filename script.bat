@@ -1,8 +1,8 @@
 @echo off
 echo Starting the application....
 
-setx LOG_LEVEL="INFO"
-setx CAMERA_INDEX=0
+setx LOG_LEVEL "INFO"
+setx CAMERA_INDEX 0
 
 echo Setting envionment variables...
 
