@@ -13,6 +13,13 @@ font-family: Roboto, Arial, sans-serif;
 font-size: 14px;
 color: #666;
 }
+#logo {
+position: absolute;
+top: 300px;
+left: 1px;
+z-index: 1;
+transform: translateY(-45%);
+}
 h1 {
 margin: 0 20px 20px 180px;
 font-weight: 400;
@@ -79,9 +86,10 @@ width: 50%;
         <!-- <video width="600" height="750" controls autoplay>
                <source src="test.mp4" type="video/mp4">
         </video>-->
-        <video width="1260" height="700" autoplay loop muted>
+        <video id="video" width="1260" height="700" autoplay loop muted>
                <source src="gui/loop.mp4" type="video/mp4" controls autoplay>
         </video>
+        <img id="logo" src="gui/logo_vnou.png" alt="Your Logo">
         <!-- <img src="background.jpg" alt="Logo" width="150" height="150">
 <i class="fas fa-envelope"></i>
 <i class="fas fa-at"></i>
