@@ -2,6 +2,8 @@
 
 export LOG_LEVEL="INFO"
 export CAMERA_INDEX=0
+export RETRY_INDEX=5
+export CACHE_EXPIRATION=60
 
 pip install --upgrade setuptools
 py -m ensurepip --upgrade

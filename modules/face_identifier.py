@@ -9,6 +9,7 @@ import face_recognition as fr
 from modules.speech import play_speech
 from modules.database import fetch_table_data_in_tuples, populate_identification_record, update_table, fetch_table_data
 from modules.data_reader import convert_binary_to_img, remove_file
+from modules.data_cache import get_data
 from constants.db_constansts import query_data, update_data, Tables
 from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
@@ -25,13 +26,12 @@ def encode_face(tuple_data=None):
         ret, frame = video_capture.read()
         if not (video_capture.isOpened() or frame or ret):
             logging.debug('Video capture not processed correctly. Retrying....')
-            encode_face()
+            encode_face(tuple_data)
         rgb_frame = frame[:, :, ::]
         face_locations = fr.face_locations(rgb_frame, model='cnn' if os.getenv('HIGH_QUALITY_ENCODING') is not None else 'hog')
         face_encodings = fr.face_encodings(rgb_frame, face_locations)
-
         # for line in read_file():
-        for row in tuple_data:
+        for row in get_data():
             IMG_BLOB = row[2]
             img = convert_binary_to_img(IMG_BLOB, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
             input_image = fr.load_image_file(img)
@@ -99,15 +99,6 @@ def update_valid_till_for_expired():
     except Exception as err:
         logging.error(err)
 
-
-def check_db_for_new_entry():
-    #TODO
-    try:
-        header, rows = fetch_table_data(Tables.IDENTIFICATION_RECORDS)
-        for row in rows:
-            update_table(update_data.UPDATE_BOOL_FOR_ID % (0 if int(time.time()) >= convert_into_epoch(str(row[3])) else 1, int(row[0])))
-    except Exception as err:
-        logging.error(err)
 
 def capture_unknown_face_img(frame, filepath=f'{os.getenv("PROJECT_PATH") or ""}captured/'):
     file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))

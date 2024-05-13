@@ -3,7 +3,7 @@ echo Starting the application....
 
 setx LOG_LEVEL "INFO"
 setx CAMERA_INDEX 0
-
+setx CACHE_EXPIRATION_IN_SECONDS 60
 echo Setting envionment variables...
 
 pip install --upgrade setuptools
