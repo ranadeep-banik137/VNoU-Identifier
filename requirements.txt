@@ -14,3 +14,5 @@ DeepImageSearch
 flask
 pillow
 watchdog
+pyttsx3
+googletrans==4.0.0-rc1
