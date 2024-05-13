@@ -103,7 +103,7 @@ def update_valid_till_for_expired():
 def capture_unknown_face_img(frame, filepath=f'{os.getenv("PROJECT_PATH") or ""}captured/'):
     file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
     cv2.imwrite(f"{filepath}NewPicture_{file_name}.jpg", frame)
-    logging.info(f"unidentified person's screen shot has been saved as NewPicture_{file_name}.jpg")
+    logging.debug(f"unidentified person's screen shot has been saved as NewPicture_{file_name}.jpg")
 
 
 def delete_similar_images(filepath):

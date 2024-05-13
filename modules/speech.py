@@ -37,7 +37,7 @@ def play_speech(input_name=''):
 
             # Here we are saving the transformed audio in a mp3 file
             # obj.save(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
-            logging.debug(f'file saved as {speech_file_name}.mp3')
+            # logging.debug(f'file saved as {speech_file_name}.mp3')
             try:
                 play_speech_without_saving_audio(text_val)
                 # Play the exam.mp3 file
