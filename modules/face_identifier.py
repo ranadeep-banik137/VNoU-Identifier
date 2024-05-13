@@ -32,8 +32,8 @@ def encode_face(tuple_data=None):
         face_encodings = fr.face_encodings(rgb_frame, face_locations)
         # for line in read_file():
         for row in get_data():
-            IMG_BLOB = row[2]
-            img = convert_binary_to_img(IMG_BLOB, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
+            binary_img = row[2]
+            img = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
             input_image = fr.load_image_file(img)
             image_face_encoding = fr.face_encodings(input_image)[0]
             known_face_encoding = [image_face_encoding]
