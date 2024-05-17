@@ -10,7 +10,7 @@ cache_last_updated = 0
 def get_data():
     global cached_data
     global cache_last_updated
-    cache_expiry_secs = 60 if os.getenv('CACHE_EXPIRATION_IN_SECONDS') is None else os.getenv('CACHE_EXPIRATION_IN_SECONDS')
+    cache_expiry_secs = 60 if os.getenv('CACHE_EXPIRATION_IN_SECONDS') is None else int(os.getenv('CACHE_EXPIRATION_IN_SECONDS'))
     # Check if cache is expired or empty
     if time.time() - cache_last_updated > cache_expiry_secs or cached_data is None:
         # Fetch data from the database

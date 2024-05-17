@@ -7,6 +7,7 @@ setx CACHE_EXPIRATION_IN_SECONDS 60
 setx VOICE_EXPIRY_SECONDS 90
 echo Setting envionment variables...
 
+pip install -r requirements.txt
 pip install --upgrade setuptools
 py -m ensurepip --upgrade
 py -m pip install --upgrade pip
