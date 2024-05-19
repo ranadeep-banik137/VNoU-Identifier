@@ -7,20 +7,20 @@ setx CACHE_EXPIRATION_IN_SECONDS 60
 setx VOICE_EXPIRY_SECONDS 90
 echo Setting envionment variables...
 
-pip install -r requirements.txt
+::pip install -r requirements.txt
 pip install --upgrade setuptools
 py -m ensurepip --upgrade
 py -m pip install --upgrade pip
 
 echo Installing basic pip libraries....
 
-start cmd /k "python main.py"
+start /min cmd /k "python main.py"
 echo Starting Face Identifier....
 
-start cmd /k "python file-transfer.py"
+start /min cmd /k "python file-transfer.py"
 echo Starting Database Transfer....
 
-start cmd /k "nodemon gui/server.js"
+start /min cmd /k "nodemon gui/server.js"
 echo Starting the server....
 
 echo Opening Google Chrome...
