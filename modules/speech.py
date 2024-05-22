@@ -18,7 +18,7 @@ def play_speech(input_name=''):
     if input_name == 'None' or input_name is None or input_name == '':
         pass
     else:
-        text_val = f'Sorry, I cannot identify your face currently. Please stand in front of the camera for a while' if input_name == 'Unknown Face' else f'Welcome {input_name}. I am AI robot identified your face and authenticated'
+        text_val = f'Sorry, I cannot identify your face currently. Please stand in front of the camera for a while' if input_name == 'Unknown Face' else f'Welcome {input_name}. I cannot interact with you but good to see you here. Have a nice day {input_name}'
         logging.info(f'User identified as {input_name}' if input_name != "Unknown Face" else '')
         # Here are converting in English Language
         language = 'en'

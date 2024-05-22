@@ -10,6 +10,7 @@ from .date_time_converter import *
 from .event_data_handler import *
 from .exportdb import *
 from .face_identifier import *
+from .image_identifier import *
 
 # You can define any initialization code here if needed
 # For example:
