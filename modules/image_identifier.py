@@ -1,132 +1,155 @@
 import threading
-import queue
-import face_recognition as fr
+
 import cv2
 import os
+import re
 import time
+import datetime
 import logging
 import numpy as np
+import face_recognition as fr
 from modules.speech import play_speech
-from modules.data_reader import convert_binary_to_img
-from modules.data_cache import get_data
+from modules.database import fetch_table_data_in_tuples, populate_identification_record, update_table, fetch_table_data
+from modules.data_cache import get_data, process_db_data
+from constants.db_constansts import query_data, update_data, Tables
+from modules.date_time_converter import convert_into_epoch
+from DeepImageSearch import Load_Data
 
-# Define a global variable to control the process
-stop_event = threading.Event()
 
-# Define a queue to hold pictures
-picture_queue = queue.Queue()
+def detect_faces(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.equalizeHist(gray)
+    faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return faces
 
-# Function to generate pictures
-def picture_producer():
-    video_capture = cv2.VideoCapture(0)
-    process_every_n_frames = int(os.getenv('FRAME_RATE_RANGE', "5"))
+
+def recognize_faces(frame, faces, reference_encodings):
+    rgb_frame = frame[:, :, ::]
+    for (x, y, w, h) in faces:
+        # face_image = rgb_frame[y:y+h, x:x+w]
+        face_encodings = fr.face_encodings(rgb_frame)
+        if face_encodings:
+            face_encoding = face_encodings[0]
+            matches = fr.compare_faces(reference_encodings, face_encoding)
+            if True in matches:
+                return True, (x, y, w, h), matches.index(True)
+    return False, (), None
+
+
+def run_face_recognition():
+    input_video_src = int(os.getenv('CAMERA_INDEX', "0"))
+    cap = cv2.VideoCapture(input_video_src or 0)
+    logging.info(
+        f'CAMERA_INDEX is set as {"default Web Cam/Camera Source" if input_video_src == 0 else "link " + str(input_video_src)}')
+
+    process_every_n_frames = int(
+        os.getenv('FRAME_RATE_RANGE', "5"))  # Adjust this value to balance performance and accuracy
     frame_count = 0
-    counter = 0
-    while not stop_event.is_set():
-        ret, frame = video_capture.read()
-        if not ret:
-            print("Failed to capture frame from camera.")
-            break
 
+    while True:
+        threading.Thread(target=update_valid_till_for_expired).start()
+        ret, frame = cap.read()
         frame_count += 1
-        if frame_count % process_every_n_frames == 0:
-            face_locations = fr.face_locations(frame,
-                                           model=os.getenv('FACE_RECOGNITION_MODEL', 'hog'))
-            if not face_locations:
-                #cv2.imshow('face detection', frame)
-                print('No face locations')
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-                continue
-            face_encodings = fr.face_encodings(frame, face_locations)
-            if face_encodings:
-                picture_queue.put(zip(face_locations, face_encodings))
-                print(f"Produced picture with face encodings.")
-        time.sleep(0.1)
-    video_capture.release()
-
-# Function to consume pictures
-def picture_consumer():
-    while not stop_event.is_set():
-        try:
-            cam_face_encodings = picture_queue.get(timeout=1)
-            print('Picture fetched from queue')
-            for row in get_data():
-                binary_img = row[2]
-                img = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
-                input_image = fr.load_image_file(img)
-                image_face_encodings = fr.face_encodings(input_image)
-                if not image_face_encodings:
-                    logging.warning(f'No face encodings found in image {img}')
+        if frame_count % process_every_n_frames != 0:
+            logging.warning('Frame out of bound warning')
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            continue
+        if ret:
+            faces = detect_faces(frame)
+            if len(faces) > 0:
+                reference_encodings, names = process_db_data()
+                match_found, face_location, match_index = recognize_faces(frame, faces, reference_encodings)
+                if match_found:
+                    name = names[match_index]
+                    logging.info(f"Face matches with: {name}")
+                    threading.Thread(target=play_speech, args=(name,)).start()
+                    threading.Thread(target=update_timer_for_user_in_background, args=(name,)).start()
                     continue
-                image_face_encoding = image_face_encodings[0]
-                known_face_encoding = [image_face_encoding]
-                known_face_names = [row[1]]
+                else:
+                    if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', True):
+                        capture_unknown_face_img(frame)
+            else:
+                logging.info('No face detected')
+                continue
 
-                for (top, right, bottom, left), face_encoding in cam_face_encodings:
-                    matches = fr.compare_faces(known_face_encoding, face_encoding, tolerance=0.50)
-                    default_name = 'Unknown Face'
-                    face_distances = fr.face_distance(known_face_encoding, face_encoding)
-                    match_index = np.argmin(face_distances)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            continue
+    threading.Thread(target=delete_similar_images, args=(f'{os.getenv("PROJECT_PATH") or ""}captured/',)).start()
+    cap.release()
 
-                    if matches[match_index]:
-                        name = known_face_names[match_index]
-                        identified = play_speech(name)
-                        # update_timer_for_user_in_background(name)
-                    else:
-                        # capture_unknown_face_img(frame)
-                        name = default_name
-                #remove_file(img)
 
-            picture_queue.task_done()
-        except queue.Empty:
-            print('The queue is empty, continue to the next iteration')
-        except Exception as e:
-            print(f'Error: {e}')
+def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('VOICE_EXPIRY_SECONDS', "30"))):
+    current_time = time.time()
+    timestamp = datetime.datetime.fromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')
+    valid_till_timestamp = datetime.datetime.fromtimestamp(int(current_time) + valid_for_seconds).strftime(
+        '%Y-%m-%d %H:%M:%S')
+    _id = fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name)[0][0]
+    id_found = False
+    try:
+        fetch_table_data_in_tuples('', query_data.ALL_FOR_ID % _id)[0][0]
+        id_found = True
+    except Exception as err:
+        logging.error(f'ignore {err}')
+    if not id_found:
+        populate_identification_record(_id, True, timestamp, valid_till_timestamp)
+    elif not int(current_time) <= convert_into_epoch(
+            str(fetch_table_data_in_tuples('', query_data.VALID_TILL_FOR_ID % _id)[0][0])):
+        update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (0, valid_till_timestamp, timestamp, _id))
 
-# Main method
-def main():
-    producer_thread = threading.Thread(target=picture_producer)
-    consumer_thread = threading.Thread(target=picture_consumer)
 
-    producer_thread.start()
-    consumer_thread.start()
+def update_valid_till_for_expired():
+    try:
+        header, rows = fetch_table_data(Tables.IDENTIFICATION_RECORDS)
+        for row in rows:
+            update_table(update_data.UPDATE_BOOL_FOR_ID % (
+                0 if int(time.time()) >= convert_into_epoch(str(row[3])) else 1, int(row[0])))
+    except Exception as err:
+        logging.error(err)
 
-    input("Press Enter to stop...")
-    stop_event.set()
 
-    producer_thread.join()
-    consumer_thread.join()
+def capture_unknown_face_img(frame, filepath=f'{os.getenv("PROJECT_PATH") or ""}captured/'):
+    file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+    cv2.imwrite(f"{filepath}NewPicture_{file_name}.jpg", frame)
+    logging.debug(f"unidentified person's screen shot has been saved as NewPicture_{file_name}.jpg")
 
-def compare_faces(image_path1, image_path2):
-    image1 = fr.load_image_file(image_path1)
-    face_locations1 = fr.face_locations(image1)
-    face_encodings1 = fr.face_encodings(image1, face_locations1)
-    if len(face_encodings1) == 0:
-        print(f"No faces found in the first image: {image_path1}")
-        return False
 
-    image2 = fr.load_image_file(image_path2)
-    face_locations2 = fr.face_locations(image2)
-    face_encodings2 = fr.face_encodings(image2, face_locations2)
-    if len(face_encodings2) == 0:
-        print(f"No faces found in the second image: {image_path2}")
-        return False
+def delete_similar_images(filepath):
+    image_list = Load_Data().from_folder(folder_list=[filepath])
 
-    face_encoding1 = face_encodings1[0]
-    face_encoding2 = face_encodings2[0]
+    # Sort image_list to ensure consistent order
+    image_list.sort()
 
-    results = fr.compare_faces([face_encoding1], face_encoding2)
-    face_distance = fr.face_distance([face_encoding1], face_encoding2)
-    return results[0], face_distance[0]
+    for index in range(len(image_list) - 1):
+        img1 = cv2.imread(image_list[index])
+        img2 = cv2.imread(image_list[index + 1])
 
-def is_match(img1, img2):
-    are_same_person, distance = compare_faces(img1, img2)
-    if are_same_person:
-        print(f"The faces in the images are of the same person (distance: {distance}).")
-    else:
-        print(f"The faces in the images are not of the same person (distance: {distance}).")
-    return are_same_person
+        if img1 is None or img2 is None:
+            logging.warning(f'One of the images could not be loaded: {image_list[index]} or {image_list[index + 1]}')
+            continue
 
-if __name__ == "__main__":
-    main()
+        if img1.shape != img2.shape:
+            logging.warning(f'Image shapes do not match: {img1.shape} vs {img2.shape}')
+            continue
+
+        # Convert the images to grayscale
+        img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+        img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+        # Check the dimensions after conversion
+        if img1_gray.shape != img2_gray.shape:
+            logging.warning(f'Grayscale image shapes do not match: {img1_gray.shape} vs {img2_gray.shape}')
+            continue
+
+        diff = cv2.subtract(img1_gray, img2_gray)
+        err = np.sum(diff ** 2)
+        mse = err / (float(img1_gray.shape[0] * img1_gray.shape[1]))
+        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE', 30))
+
+        logging.debug(f'MSE for images {image_list[index]} and {image_list[index + 1]}: {mse}')
+
+        if mse < similarity_threshold:
+            logging.debug(f'Deleting similar image: {image_list[index]}')
+            os.remove(image_list[index])

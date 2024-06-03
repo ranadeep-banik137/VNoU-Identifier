@@ -69,7 +69,7 @@ def populate_users(userID,file,name):
 		pass
 
 
-def populate_identification_record(userID, time, is_identified, valid_till):
+def populate_identification_record(userID, is_identified, time, valid_till):
 	try:
 		# Read database configuration
 		conn, cursor = create_connection()
@@ -77,7 +77,7 @@ def populate_identification_record(userID, time, is_identified, valid_till):
 			create_table(create_table_queries.IDENTIFICATION_RECORDS)
 			# Execute the INSERT statement
 			# Convert the image data to Binary
-			cursor.execute(insert_table_queries.IDENTIFICATION_RECORDS % (userID, time, is_identified, valid_till))
+			cursor.execute(insert_table_queries.IDENTIFICATION_RECORDS % (userID, is_identified, time, valid_till))
 			# Commit the changes to the database
 			conn.commit()
 		except Exception as error:

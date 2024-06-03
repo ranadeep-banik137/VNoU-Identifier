@@ -1,9 +1,11 @@
-from modules.face_identifier import encode_face
+from modules.image_identifier import run_face_recognition
+
 from modules.app_logger import set_log_handler
 
 
 def run_app():
-    encode_face()
+    run_face_recognition()
+    # encode_face()
 
 
 # Press the green button in the gutter to run the script.

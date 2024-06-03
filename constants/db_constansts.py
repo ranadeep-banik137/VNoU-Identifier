@@ -34,6 +34,7 @@ class update_data:
     UPDATE_TIMESTAMP = """ UPDATE identification_records SET is_identified = 1, valid_till = '%s' WHERE userID = %s """
     UPDATE_BOOL_FOR_ID = """ UPDATE identification_records SET is_identified = %s WHERE userID = %s """
     UPDATE_TIMESTAMP_WITH_IDENTIFIER = """ UPDATE identification_records SET is_identified = %s, valid_till = '%s' WHERE userID = %s """
+    UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER = """ UPDATE identification_records SET is_identified = %s, valid_till = '%s', time_identified = '%s' WHERE userID = %s """
 class misc_queries:
     SAFE_MODE = 'SET SQL_SAFE_UPDATES = %s'
 
