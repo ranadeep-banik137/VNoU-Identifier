@@ -19,7 +19,12 @@ from DeepImageSearch import Load_Data
 def detect_faces(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.equalizeHist(gray)
-    faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray,
+                                                                                                                  scaleFactor=1.1,
+                                                                                                                  minNeighbors=5,
+                                                                                                                  minSize=(
+                                                                                                                  30,
+                                                                                                                  30))
     return faces
 
 
@@ -30,6 +35,7 @@ def recognize_faces(frame, faces, reference_encodings):
         face_encodings = fr.face_encodings(rgb_frame)
         if face_encodings:
             face_encoding = face_encodings[0]
+            logging.info('Face detected in frame')
             matches = fr.compare_faces(reference_encodings, face_encoding)
             if True in matches:
                 return True, (x, y, w, h), matches.index(True)
@@ -44,14 +50,15 @@ def run_face_recognition():
 
     process_every_n_frames = int(
         os.getenv('FRAME_RATE_RANGE', "5"))  # Adjust this value to balance performance and accuracy
+    logging.info(f'Frames will be skipped every {process_every_n_frames} seconds')
     frame_count = 0
 
     while True:
-        threading.Thread(target=update_valid_till_for_expired).start()
+        update_valid_till_for_expired()
         ret, frame = cap.read()
         frame_count += 1
         if frame_count % process_every_n_frames != 0:
-            logging.warning('Frame out of bound warning')
+            logging.warning(f'Index frame {frame_count} skipped')
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
             continue
@@ -62,7 +69,7 @@ def run_face_recognition():
                 match_found, face_location, match_index = recognize_faces(frame, faces, reference_encodings)
                 if match_found:
                     name = names[match_index]
-                    logging.info(f"Face matches with: {name}")
+                    logging.info(f"Face identified as: {name}")
                     threading.Thread(target=play_speech, args=(name,)).start()
                     threading.Thread(target=update_timer_for_user_in_background, args=(name,)).start()
                     continue
@@ -95,9 +102,11 @@ def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('V
         logging.error(f'ignore {err}')
     if not id_found:
         populate_identification_record(_id, True, timestamp, valid_till_timestamp)
+        logging.debug(f'User {name} has no record in identification_record table and has been created now')
     elif not int(current_time) <= convert_into_epoch(
             str(fetch_table_data_in_tuples('', query_data.VALID_TILL_FOR_ID % _id)[0][0])):
         update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (0, valid_till_timestamp, timestamp, _id))
+        logging.info(f'User {name} updated valid till date in identification records table')
 
 
 def update_valid_till_for_expired():
@@ -146,7 +155,7 @@ def delete_similar_images(filepath):
         diff = cv2.subtract(img1_gray, img2_gray)
         err = np.sum(diff ** 2)
         mse = err / (float(img1_gray.shape[0] * img1_gray.shape[1]))
-        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE', 30))
+        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE', 20))
 
         logging.debug(f'MSE for images {image_list[index]} and {image_list[index + 1]}: {mse}')
 
