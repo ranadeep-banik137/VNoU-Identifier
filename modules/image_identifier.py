@@ -43,8 +43,8 @@ def recognize_faces(frame, faces, reference_encodings):
 
 
 def run_face_recognition():
-    input_video_src = int(os.getenv('CAMERA_INDEX', "0"))
-    cap = cv2.VideoCapture(input_video_src or 0)
+    input_video_src = os.getenv('CAMERA_INDEX', '0')
+    cap = cv2.VideoCapture(input_video_src if not input_video_src.isdigit() else int(input_video_src))
     logging.info(
         f'CAMERA_INDEX is set as {"default Web Cam/Camera Source" if input_video_src == 0 else "link " + str(input_video_src)}')
 
@@ -54,6 +54,7 @@ def run_face_recognition():
     frame_count = 0
 
     while True:
+        reference_encodings, names = process_db_data()
         update_valid_till_for_expired()
         ret, frame = cap.read()
         frame_count += 1
@@ -65,7 +66,6 @@ def run_face_recognition():
         if ret:
             faces = detect_faces(frame)
             if len(faces) > 0:
-                reference_encodings, names = process_db_data()
                 match_found, face_location, match_index = recognize_faces(frame, faces, reference_encodings)
                 if match_found:
                     name = names[match_index]
@@ -83,6 +83,7 @@ def run_face_recognition():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         else:
+            logging.warning('Frame not loaded correctly. Loading next frame..')
             continue
     threading.Thread(target=delete_similar_images, args=(f'{os.getenv("PROJECT_PATH") or ""}captured/',)).start()
     cap.release()

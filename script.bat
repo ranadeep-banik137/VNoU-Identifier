@@ -5,8 +5,8 @@ setx LOG_LEVEL "INFO"
 setx CAMERA_INDEX 0
 setx FRAME_RATE_RANGE 5
 setx FACE_RECOGNITION_MODEL "cnn"
-setx CACHE_EXPIRATION_IN_SECONDS 60
-setx VOICE_EXPIRY_SECONDS 90
+setx CACHE_EXPIRATION_IN_SECONDS 10800
+setx VOICE_EXPIRY_SECONDS 180
 echo Setting envionment variables...
 
 ::pip install -r requirements.txt
