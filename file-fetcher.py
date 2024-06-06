@@ -12,8 +12,9 @@ if __name__ == '__main__':
     path = "gui/uploads/"  # Use your actual path here
     while True:
         files = get_file_names(path)
-        logging.info('No files' if not len(files) > 0 else f'there are files found in {path}')
+        # logging.info('No files' if not len(files) > 0 else there are files found in {path}')
         if len(files) > 0:
+            logging.info(f'Some files found in {path}')
             time.sleep(2)
             for file in files:
                 wait_until_file_is_ready(file)

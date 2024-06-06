@@ -12,7 +12,19 @@ class create_table_queries:
 
 class insert_table_queries:
 
-    USERS = "INSERT INTO users\
+    USERS = """INSERT INTO users (name, userImg, contact, address, city, state, country)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
+               ON DUPLICATE KEY UPDATE
+               name = VALUES(name),
+               userImg = VALUES(userImg),
+               contact = VALUES(contact),
+               address = VALUES(address),
+               city = VALUES(city),
+               state = VALUES(state),
+               country = VALUES(country)
+               """
+
+    USERS_IF_FAILED = "INSERT INTO users\
 			(name,userImg,contact,address,city,state,country)\
 					VALUES(%s,%s,%s,%s,%s,%s,%s)"
 
