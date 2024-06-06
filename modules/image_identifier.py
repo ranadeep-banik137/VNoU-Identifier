@@ -1,5 +1,4 @@
 import threading
-
 import cv2
 import os
 import re
@@ -10,7 +9,7 @@ import numpy as np
 import face_recognition as fr
 from modules.speech import play_speech
 from modules.database import fetch_table_data_in_tuples, populate_identification_record, update_table, fetch_table_data
-from modules.data_cache import get_data, process_db_data
+from modules.data_cache import process_db_data
 from constants.db_constansts import query_data, update_data, Tables
 from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
@@ -95,19 +94,22 @@ def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('V
     valid_till_timestamp = datetime.datetime.fromtimestamp(int(current_time) + valid_for_seconds).strftime(
         '%Y-%m-%d %H:%M:%S')
     _id = fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name)[0][0]
+    table_data = fetch_table_data_in_tuples('', query_data.VISIT_COUNT_FOR_ID % _id)
+    visit_count = 0
     id_found = False
-    try:
-        fetch_table_data_in_tuples('', query_data.ALL_FOR_ID % _id)[0][0]
+    if len(table_data) > 0:
+        visit_count = int(table_data[0][0])
         id_found = True
-    except Exception as err:
-        logging.error(f'ignore {err}')
     if not id_found:
-        populate_identification_record(_id, True, timestamp, valid_till_timestamp)
+        populate_identification_record(_id, True, timestamp, valid_till_timestamp, (visit_count + 1))
         logging.debug(f'User {name} has no record in identification_record table and has been created now')
     elif not int(current_time) <= convert_into_epoch(
             str(fetch_table_data_in_tuples('', query_data.VALID_TILL_FOR_ID % _id)[0][0])):
-        update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (0, valid_till_timestamp, timestamp, _id))
-        logging.info(f'User {name} updated valid till date in identification records table')
+        update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (0, valid_till_timestamp, timestamp, (visit_count + 1), _id))
+        logging.debug(f'User {name} updated valid till date and visit count in identification records table')
+    else:
+        update_table(update_data.UPDATE_VISIT_COUNT % (timestamp, (visit_count + 1), _id))
+        logging.debug(f'User {name} updated visit count in identification records table')
 
 
 def update_valid_till_for_expired():
@@ -122,8 +124,8 @@ def update_valid_till_for_expired():
 
 def capture_unknown_face_img(frame, filepath=f'{os.getenv("PROJECT_PATH") or ""}captured/'):
     file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
-    cv2.imwrite(f"{filepath}NewPicture_{file_name}.jpg", frame)
-    logging.debug(f"unidentified person's screen shot has been saved as NewPicture_{file_name}.jpg")
+    cv2.imwrite(f"{filepath}VNoU_{file_name}.jpg", frame)
+    logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
 
 
 def delete_similar_images(filepath):

@@ -10,9 +10,10 @@ excel2json-3
 pandas~=2.0.3
 numpy~=1.26.4
 pydub~=0.25.1
-DeepImageSearch
+DeepImageSearch~=2.5
 flask
 pillow
-watchdog
-pyttsx3
+watchdog~=4.0.0
+pyttsx3~=2.90
 googletrans==4.0.0-rc1
+PyYAML~=6.0.1

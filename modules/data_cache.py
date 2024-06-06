@@ -30,7 +30,7 @@ def process_db_data():
     global cache_last_updated
     if time.time() - cache_last_updated > cache_expiry_secs or cached_data is None:
         for row in get_data():
-            id, name, image_blob = row
+            name = row[1]
             binary_img = row[2]
             image_path = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
             reference_image = fr.load_image_file(image_path)

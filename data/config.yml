@@ -1,0 +1,22 @@
+# MySQL credentials (Confidential file)
+database:
+  host: localhost
+  port: 3306
+  user: ranadeep
+  password: rana#123
+  db: profiles
+  timestamp-format: '%Y-%m-%d %H:%M:%S'
+
+#App arguments
+face_recognition:
+  camera-index: 0
+  frame-rate-range: 5
+  capture-unknown-face: False
+  voice-command-expiry: 30
+  delete-img-similarity-percentage: 20
+  supported-img-files: ['.jpg', '.jpeg', '.png', '.img']
+
+#Directory
+files:
+  save-unknown-image-filepath: 'captured/'
+  incoming-img-filepath: 'gui/uploads'

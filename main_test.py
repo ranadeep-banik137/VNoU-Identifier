@@ -2,7 +2,7 @@ import logging
 import os
 from modules.speech import play_speech
 from modules.data_reader import convertToBinaryData, read_file
-from modules.database import fetch_last_user_id, insert_table_data
+from modules.database import fetch_last_user_id, populate_users
 
 
 def run_test():
@@ -15,7 +15,7 @@ def populate_database_with_local_config():
             continue
         comma_separated_val = line.split(",")
         print(f'Last user id is {fetch_last_user_id()}')
-        insert_table_data(fetch_last_user_id() + 1, convertToBinaryData(f'img/{comma_separated_val[0]}.png'),
+        populate_users(fetch_last_user_id() + 1, convertToBinaryData(f'img/{comma_separated_val[0]}.png'),
                           comma_separated_val[1])
 
 
