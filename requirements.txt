@@ -17,3 +17,5 @@ watchdog~=4.0.0
 pyttsx3~=2.90
 googletrans==4.0.0-rc1
 PyYAML~=6.0.1
+mtcnn~=0.1.1
+tensorflow

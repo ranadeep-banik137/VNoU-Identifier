@@ -7,6 +7,7 @@ import datetime
 import logging
 import numpy as np
 import face_recognition as fr
+from mtcnn import MTCNN
 from modules.speech import play_speech
 from modules.database import fetch_table_data_in_tuples, populate_identification_record, update_table, fetch_table_data
 from modules.data_cache import process_db_data
@@ -15,7 +16,7 @@ from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
 
 
-def detect_faces(image):
+def detect_faces_with_haarcascade(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.equalizeHist(gray)
     faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray,
@@ -27,19 +28,52 @@ def detect_faces(image):
     return faces
 
 
-def recognize_faces(frame, faces, reference_encodings):
+def detect_faces_with_mtcnn(image):
+    detector = MTCNN()
+    faces = detector.detect_faces(image)
+    face_locations = [(face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0]) for face in faces]
+    return face_locations
+
+
+def recognize_faces_with_faces(frame, faces, reference_encodings):
     rgb_frame = frame[:, :, ::]
     for (x, y, w, h) in faces:
-        # face_image = rgb_frame[y:y+h, x:x+w]
-        face_encodings = fr.face_encodings(rgb_frame)
+        face_image = rgb_frame[y:y+w, x:x+h]
+        face_encodings = fr.face_encodings(face_image)
         if face_encodings:
             face_encoding = face_encodings[0]
             logging.info('Face detected in frame')
             matches = fr.compare_faces(reference_encodings, face_encoding)
             if True in matches:
-                return True, (x, y, w, h), matches.index(True)
-    return False, (), None
+                return True, matches.index(True)
+    return False, None
 
+
+def recognize_faces_with_face_locations(frame, face_locations, reference_encodings):
+    rgb_frame = frame[:, :, ::]
+    face_encodings = fr.face_encodings(rgb_frame, face_locations) if face_locations else fr.face_encodings(rgb_frame)
+    for face_encoding in face_encodings:
+        if face_encodings:
+            logging.info('Face detected in frame')
+            matches = fr.compare_faces(reference_encodings, face_encoding)
+            face_distances = fr.face_distance(reference_encodings, face_encoding)
+            best_match_index = np.argmin(face_distances)
+            if matches[best_match_index]:
+                return True, best_match_index
+            # if True in matches:
+            #    return True, matches.index(True)
+    return False, None
+
+
+face_recognizers = {
+    'cnn': recognize_faces_with_face_locations,
+    'other': recognize_faces_with_faces
+}
+
+face_detector = {
+    'cnn' : detect_faces_with_mtcnn,
+    'other' : detect_faces_with_haarcascade
+}
 
 def run_face_recognition():
     input_video_src = os.getenv('CAMERA_INDEX', '0')
@@ -63,9 +97,10 @@ def run_face_recognition():
                 break
             continue
         if ret:
-            faces = detect_faces(frame)
-            if len(faces) > 0:
-                match_found, face_location, match_index = recognize_faces(frame, faces, reference_encodings)
+            face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', 'cnn')
+            face_locations = face_detector[face_detect_model](frame)
+            if face_locations:
+                match_found, match_index = face_recognizers[face_detect_model](frame, face_locations, reference_encodings)
                 if match_found:
                     name = names[match_index]
                     logging.info(f"Face identified as: {name}")
