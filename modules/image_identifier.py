@@ -16,7 +16,6 @@ from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
 from modules.config_reader import read_config
 
-
 config = read_config()
 
 
@@ -27,15 +26,24 @@ def detect_faces_with_haarcascade(image):
                                                                                                                   scaleFactor=1.1,
                                                                                                                   minNeighbors=5,
                                                                                                                   minSize=(
-                                                                                                                  30,
-                                                                                                                  30))
+                                                                                                                      30,
+                                                                                                                      30))
     return faces
 
 
 def detect_faces_with_mtcnn(image):
     detector = MTCNN()
     faces = detector.detect_faces(image)
-    face_locations = [(face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0]) for face in faces]
+    face_locations = [(face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0])
+                      for face in faces]
+    return face_locations
+
+
+def detect_faces_with_fr_inbuilt_models(image):
+    image = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
+    rgb_frame = image[:, :, ::]
+    face_locations = fr.face_locations(rgb_frame,
+                                       model=os.getenv('FACE_LOCATION_IDENTIFIER_MODEL', config['face_recognition']['face-location-identifier-model']))
     return face_locations
 
 
@@ -70,13 +78,15 @@ def recognize_faces_with_face_locations(frame, face_locations, reference_encodin
 
 
 face_recognizers = {
-    'cnn': recognize_faces_with_face_locations,
-    'other': recognize_faces_with_faces
+    'mtcnn': recognize_faces_with_face_locations,
+    'cascade': recognize_faces_with_faces,
+    'inbuilt': recognize_faces_with_face_locations
 }
 
 face_detector = {
-    'cnn' : detect_faces_with_mtcnn,
-    'other' : detect_faces_with_haarcascade
+    'mtcnn': detect_faces_with_mtcnn,
+    'cascade': detect_faces_with_haarcascade,
+    'inbuilt': detect_faces_with_fr_inbuilt_models
 }
 
 
@@ -88,7 +98,8 @@ def run_face_recognition():
         f'CAMERA_INDEX is set as {"default Web Cam/Camera Source" if input_video_src == 0 else "link " + str(input_video_src)}')
 
     process_every_n_frames = int(
-        os.getenv('FRAME_RATE_RANGE', face_config['frame-rate-range']))  # Adjust this value to balance performance and accuracy
+        os.getenv('FRAME_RATE_RANGE',
+                  face_config['frame-rate-range']))  # Adjust this value to balance performance and accuracy
     logging.info(f'Frames will be skipped every {process_every_n_frames} seconds')
     frame_count = 0
 
@@ -106,7 +117,8 @@ def run_face_recognition():
             face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', face_config['face-recognition-model'])
             face_locations = face_detector[face_detect_model](frame)
             if len(face_locations) > 0:
-                match_found, match_index = face_recognizers[face_detect_model](frame, face_locations, reference_encodings)
+                match_found, match_index = face_recognizers[face_detect_model](frame, face_locations,
+                                                                               reference_encodings)
                 if match_found:
                     name = names[match_index]
                     logging.info(f"Face identified as: {name}")
@@ -129,7 +141,8 @@ def run_face_recognition():
     cap.release()
 
 
-def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('VOICE_EXPIRY_SECONDS', config['face_recognition']['voice-command-expiry']))):
+def update_timer_for_user_in_background(name, valid_for_seconds=int(
+    os.getenv('VOICE_EXPIRY_SECONDS', config['face_recognition']['voice-command-expiry']))):
     current_time = time.time()
     timestamp = datetime.datetime.fromtimestamp(current_time).strftime(config['app_default']['timestamp-format'])
     valid_till_timestamp = datetime.datetime.fromtimestamp(int(current_time) + valid_for_seconds).strftime(
@@ -146,7 +159,8 @@ def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('V
         logging.debug(f'User {name} has no record in identification_record table and has been created now')
     elif not int(current_time) <= convert_into_epoch(
             str(fetch_table_data_in_tuples('', query_data.VALID_TILL_FOR_ID % _id)[0][0])):
-        update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (0, valid_till_timestamp, timestamp, (visit_count + 1), _id))
+        update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (
+        0, valid_till_timestamp, timestamp, (visit_count + 1), _id))
         logging.debug(f'User {name} updated valid till date and visit count in identification records table')
     else:
         update_table(update_data.UPDATE_VISIT_COUNT % (timestamp, (visit_count + 1), _id))
@@ -164,7 +178,8 @@ def update_valid_till_for_expired():
 
 
 def capture_unknown_face_img(frame, filepath=config['files']['save-unknown-image-filepath']):
-    file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
+    file_name = re.sub("[^\w]", "_",
+                       datetime.datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
     cv2.imwrite(f"{filepath}VNoU_{file_name}.jpg", frame)
     logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
 
@@ -199,7 +214,8 @@ def delete_similar_images(filepath):
         diff = cv2.subtract(img1_gray, img2_gray)
         err = np.sum(diff ** 2)
         mse = err / (float(img1_gray.shape[0] * img1_gray.shape[1]))
-        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE', config['face_recognition']['delete-img-similarity-percentage']))
+        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE',
+                                             config['face_recognition']['delete-img-similarity-percentage']))
 
         logging.debug(f'MSE for images {image_list[index]} and {image_list[index + 1]}: {mse}')
 
