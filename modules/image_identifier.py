@@ -42,8 +42,10 @@ def detect_faces_with_mtcnn(image):
 def recognize_faces_with_faces(frame, faces, reference_encodings):
     rgb_frame = frame[:, :, ::]
     for (x, y, w, h) in faces:
-        face_image = rgb_frame[y:y+w, x:x+h]
-        face_encodings = fr.face_encodings(face_image)
+        face_location = (y, x + w, y + h, x)
+
+        # Extract the face encoding for the given face location
+        face_encodings = fr.face_encodings(rgb_frame, known_face_locations=[face_location], num_jitters=1)
         if face_encodings:
             face_encoding = face_encodings[0]
             logging.info('Face detected in frame')
@@ -64,8 +66,6 @@ def recognize_faces_with_face_locations(frame, face_locations, reference_encodin
             best_match_index = np.argmin(face_distances)
             if matches[best_match_index]:
                 return True, best_match_index
-            # if True in matches:
-            #    return True, matches.index(True)
     return False, None
 
 
