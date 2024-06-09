@@ -82,6 +82,7 @@ def populate_users(file, name, contact='', address='', city='', state='', countr
             try:
                 cursor.execute(insert_table_queries.USERS_IF_FAILED, (name, file, contact, address, city, state, country))
                 # Commit the changes to the database
+                logging.info(f'Inserted data for user {name}')
                 conn.commit()
             except Exception as retry_err:
                 logging.error("Error again while retrying data insertion in users table", retry_err)

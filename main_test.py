@@ -1,31 +1,42 @@
-import logging
-import os
-from modules.speech import play_speech
-from modules.data_reader import convertToBinaryData, read_file
-from modules.database import fetch_last_user_id, populate_users
+import requests
+from PIL import Image
+from io import BytesIO
+import threading
+from modules.database import populate_users
 
 
-def run_test():
-    play_speech('Ranadeep Banik')
+# Function to fetch random user data
+def fetch_random_user_data(n):
+    response = requests.get(f'https://randomuser.me/api/?results={n}')
+    data = response.json()
+    return data['results']
 
 
-def populate_database_with_local_config():
-    for line in read_file():
-        if 'id,name' in line:
-            continue
-        comma_separated_val = line.split(",")
-        print(f'Last user id is {fetch_last_user_id()}')
-        populate_users(fetch_last_user_id() + 1, convertToBinaryData(f'img/{comma_separated_val[0]}.png'),
-                          comma_separated_val[1])
+# Function to convert image URL to binary blob
+def image_url_to_blob(url):
+    response = requests.get(url)
+    img = Image.open(BytesIO(response.content))
+    img_byte_arr = BytesIO()
+    img.save(img_byte_arr, format='JPEG')
+    img_byte_arr = img_byte_arr.getvalue()
+    return img_byte_arr
 
 
-def set_log_level():
-    logging.getLogger().setLevel(
-        os.getenv('LOG_LEVEL').upper() if os.getenv('LOG_LEVEL') is not None else None or 'INFO')
+def main(n):
+    users = fetch_random_user_data(n)
+    for user in users:
+        name = f"{user['name']['first']} {user['name']['last']}"
+        userImg = image_url_to_blob(user['picture']['large'])
+        address = f"{user['location']['street']['number']} {user['location']['street']['name']}, {user['location']['postcode']}"
+        city = f"{user['location']['city']}"
+        state = f"{user['location']['state']}"
+        contact = user['phone']
+        country = user['location']['country']
+        threading.Thread(target=populate_users, args=(userImg, name, contact, address, city, state, country)).start()
+    # insert_user_data_into_db(users)
+    print(f"Inserted {n} users into the database.")
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    # populate_database_with_local_config()
-    set_log_level()
-    run_test()
+if __name__ == "__main__":
+    number_of_users = 1000  # Set the number of users to fetch and insert
+    main(number_of_users)
