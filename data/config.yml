@@ -1,10 +1,10 @@
 # MySQL credentials (Confidential file)
 database:
-  host: localhost
-  port: 3306
-  user: ranadeep
-  password: rana#123
-  db: profiles
+  host: 'localhost'
+  port: '3306'
+  user: 'ranadeep'
+  password: 'rana#123'
+  db: 'profiles'
 
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'
@@ -24,7 +24,7 @@ face_recognition:
   camera-index: 0
   frame-rate-range: 5
   capture-unknown-face: False
-  voice-command-expiry: 30
+  voice-command-expiry: 3600
   delete-img-similarity-percentage: 20
   supported-img-files: ['.jpg', '.jpeg', '.png', '.img']
   face-recognition-model: 'mtcnn'
