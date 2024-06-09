@@ -1,11 +1,17 @@
 import yaml
+import logging
 
 
 # Read the YAML file
 def read_config(config_path='data/config.yml'):
     config = None
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
+    try:
+        with open(config_path, 'r') as file:
+            config = yaml.safe_load(file)
+    except FileNotFoundError as err:
+        logging.error(f'Config file not found {err}')
+    except Exception as e:
+        logging.error(f'Config file reading failed {e}')
     return config
 
 
@@ -20,5 +26,10 @@ def update_config(config_data=''):
     #        'password': 'your_password'
     #    }
     # }
-    with open('config.yml', 'w') as file:
-        yaml.dump(config_data, file)
+    try:
+        with open('config.yml', 'w') as file:
+            yaml.dump(config_data, file)
+    except FileNotFoundError as err:
+        logging.error(f'Config file not found {err}')
+    except Exception as e:
+        logging.error(f'Config file update failed {e}')

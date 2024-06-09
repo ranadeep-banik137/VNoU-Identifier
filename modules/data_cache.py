@@ -3,13 +3,16 @@ import time
 import face_recognition as fr
 from modules.database import fetch_table_data_in_tuples
 from modules.data_reader import convert_binary_to_img, remove_file
+from modules.config_reader import read_config
+
 
 # Cached data
+config = read_config()
 cached_data = None
 cache_last_updated = 0
 reference_encodings = []
 names = []
-cache_expiry_secs = int(os.getenv('CACHE_EXPIRATION_IN_SECONDS', 10800))
+cache_expiry_secs = int(os.getenv('CACHE_EXPIRATION_IN_SECONDS', config['face_recognition']['cache-expiry']))
 
 
 def get_data():

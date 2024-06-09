@@ -1,10 +1,14 @@
 import logging
 import os
+from modules.config_reader import read_config
 
 
-def set_log_handler(formatter=logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s')):
+config = read_config()
+
+
+def set_log_handler(formatter=logging.Formatter(config['app_default']['log-formatter'])):
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     logger = logging.getLogger()
-    logger.setLevel(os.getenv('LOG_LEVEL').upper() if os.getenv('LOG_LEVEL') is not None else None or 'INFO')
+    logger.setLevel(os.getenv('LOG_LEVEL', config['app_default']['log-level']).upper())
     logger.addHandler(stream_handler)

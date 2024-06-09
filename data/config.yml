@@ -5,9 +5,16 @@ database:
   user: ranadeep
   password: rana#123
   db: profiles
+
+app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'
+  log-level: 'INFO'
+  log-formatter: '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
 
 #App arguments
+# face-recognition-model can have 2 values 1. cnn 2. other
+# cnn : It is slight faster and will capture accurate faces but has to be in proper position of camera
+# other: it uses hog model which is very fast but lack in accuracy
 face_recognition:
   camera-index: 0
   frame-rate-range: 5
@@ -15,6 +22,8 @@ face_recognition:
   voice-command-expiry: 30
   delete-img-similarity-percentage: 20
   supported-img-files: ['.jpg', '.jpeg', '.png', '.img']
+  face-recognition-model: 'cnn'
+  cache-expiry: 10800
 
 #Directory
 files:

@@ -14,6 +14,10 @@ from modules.data_cache import process_db_data
 from constants.db_constansts import query_data, update_data, Tables
 from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
+from modules.config_reader import read_config
+
+
+config = read_config()
 
 
 def detect_faces_with_haarcascade(image):
@@ -75,14 +79,16 @@ face_detector = {
     'other' : detect_faces_with_haarcascade
 }
 
+
 def run_face_recognition():
-    input_video_src = os.getenv('CAMERA_INDEX', '0')
+    face_config = config['face_recognition']
+    input_video_src = str(os.getenv('CAMERA_INDEX', face_config['camera-index']))
     cap = cv2.VideoCapture(input_video_src if not input_video_src.isdigit() else int(input_video_src))
     logging.info(
         f'CAMERA_INDEX is set as {"default Web Cam/Camera Source" if input_video_src == 0 else "link " + str(input_video_src)}')
 
     process_every_n_frames = int(
-        os.getenv('FRAME_RATE_RANGE', "5"))  # Adjust this value to balance performance and accuracy
+        os.getenv('FRAME_RATE_RANGE', face_config['frame-rate-range']))  # Adjust this value to balance performance and accuracy
     logging.info(f'Frames will be skipped every {process_every_n_frames} seconds')
     frame_count = 0
 
@@ -97,9 +103,9 @@ def run_face_recognition():
                 break
             continue
         if ret:
-            face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', 'cnn')
+            face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', face_config['face-recognition-model'])
             face_locations = face_detector[face_detect_model](frame)
-            if face_locations:
+            if len(face_locations) > 0:
                 match_found, match_index = face_recognizers[face_detect_model](frame, face_locations, reference_encodings)
                 if match_found:
                     name = names[match_index]
@@ -108,7 +114,7 @@ def run_face_recognition():
                     threading.Thread(target=update_timer_for_user_in_background, args=(name,)).start()
                     continue
                 else:
-                    if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', True):
+                    if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):
                         capture_unknown_face_img(frame)
             else:
                 logging.info('No face detected')
@@ -119,15 +125,15 @@ def run_face_recognition():
         else:
             logging.warning('Frame not loaded correctly. Loading next frame..')
             continue
-    threading.Thread(target=delete_similar_images, args=(f'{os.getenv("PROJECT_PATH") or ""}captured/',)).start()
+    threading.Thread(target=delete_similar_images, args=(face_config['save-unknown-image-filepath'],)).start()
     cap.release()
 
 
-def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('VOICE_EXPIRY_SECONDS', "30"))):
+def update_timer_for_user_in_background(name, valid_for_seconds=int(os.getenv('VOICE_EXPIRY_SECONDS', config['face_recognition']['voice-command-expiry']))):
     current_time = time.time()
-    timestamp = datetime.datetime.fromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = datetime.datetime.fromtimestamp(current_time).strftime(config['app_default']['timestamp-format'])
     valid_till_timestamp = datetime.datetime.fromtimestamp(int(current_time) + valid_for_seconds).strftime(
-        '%Y-%m-%d %H:%M:%S')
+        config['app_default']['timestamp-format'])
     _id = fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name)[0][0]
     table_data = fetch_table_data_in_tuples('', query_data.VISIT_COUNT_FOR_ID % _id)
     visit_count = 0
@@ -157,8 +163,8 @@ def update_valid_till_for_expired():
         logging.error(err)
 
 
-def capture_unknown_face_img(frame, filepath=f'{os.getenv("PROJECT_PATH") or ""}captured/'):
-    file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
+def capture_unknown_face_img(frame, filepath=config['files']['save-unknown-image-filepath']):
+    file_name = re.sub("[^\w]", "_", datetime.datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
     cv2.imwrite(f"{filepath}VNoU_{file_name}.jpg", frame)
     logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
 
@@ -193,7 +199,7 @@ def delete_similar_images(filepath):
         diff = cv2.subtract(img1_gray, img2_gray)
         err = np.sum(diff ** 2)
         mse = err / (float(img1_gray.shape[0] * img1_gray.shape[1]))
-        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE', 20))
+        similarity_threshold = int(os.getenv('IMG_SIMILARITY_PERCENT_FOR_DELETE', config['face_recognition']['delete-img-similarity-percentage']))
 
         logging.debug(f'MSE for images {image_list[index]} and {image_list[index + 1]}: {mse}')
 

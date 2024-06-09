@@ -1,20 +1,20 @@
 @echo off
 echo Starting the application....
 
-setx LOG_LEVEL "INFO"
-setx CAMERA_INDEX 0
-setx FRAME_RATE_RANGE 5
-setx FACE_RECOGNITION_MODEL "cnn"
-setx CACHE_EXPIRATION_IN_SECONDS 10800
-setx VOICE_EXPIRY_SECONDS 180
-echo Setting envionment variables...
+:: setx LOG_LEVEL "INFO"
+:: setx CAMERA_INDEX 0
+:: setx FRAME_RATE_RANGE 5
+:: setx FACE_RECOGNITION_MODEL "cnn"
+:: setx CACHE_EXPIRATION_IN_SECONDS 10800
+:: setx VOICE_EXPIRY_SECONDS 180
+:: echo Setting envionment variables...
 
 ::pip install -r requirements.txt
-pip install --upgrade setuptools
-py -m ensurepip --upgrade
-py -m pip install --upgrade pip
+:: pip install --upgrade setuptools
+:: py -m ensurepip --upgrade
+:: py -m pip install --upgrade pip
 
-echo Installing basic pip libraries....
+:: echo Installing basic pip libraries....
 
 start /min cmd /k "python main.py"
 echo Starting Face Identifier....
