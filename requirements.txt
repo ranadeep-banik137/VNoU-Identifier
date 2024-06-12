@@ -20,3 +20,4 @@ PyYAML~=6.0.1
 mtcnn~=0.1.1
 tensorflow
 requests~=2.31.0
+tqdm~=4.66.4

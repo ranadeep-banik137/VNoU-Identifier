@@ -67,3 +67,12 @@ def wait_until_file_is_ready(file, retry=5):
                     retry = 0
         else:
             retry = retry - 1
+
+
+def get_missing_items_from_tuple_list(main_list, latest_list):
+    main_set = set(main_list)
+    missing_items = []
+    for item in latest_list:
+        if item not in main_set:
+            missing_items.append(item)
+    return missing_items
