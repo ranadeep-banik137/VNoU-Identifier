@@ -28,7 +28,7 @@ face_recognition:
   delete-img-similarity-percentage: 20
   supported-img-files: ['.jpg', '.jpeg', '.png', '.img']
   face-recognition-model: 'mtcnn'
-  cache-expiry: 10800
+  cache-expiry: 120
   face-location-identifier-model: 'cnn'
 
 #Directory
