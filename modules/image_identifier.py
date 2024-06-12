@@ -72,6 +72,9 @@ def recognize_faces_with_face_locations(frame, face_locations, reference_encodin
             matches = fr.compare_faces(reference_encodings, face_encoding)
             face_distances = fr.face_distance(reference_encodings, face_encoding)
             best_match_index = np.argmin(face_distances)
+            if best_match_index > len(matches):
+                logging.error(f'Error in face image in backend. Please change backend images')
+                return False, None
             if matches[best_match_index]:
                 return True, best_match_index
     return False, None
