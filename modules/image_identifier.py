@@ -47,6 +47,13 @@ def detect_faces_with_fr_inbuilt_models(image):
     return face_locations
 
 
+def detect_faces_with_basic_interpreter(image):
+    small_frame = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
+    rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+    face_locations = fr.face_locations(rgb_small_frame)
+    return face_locations
+
+
 def recognize_faces_with_faces(frame, faces, reference_encodings):
     rgb_frame = frame[:, :, ::]
     for (x, y, w, h) in faces:
@@ -80,16 +87,36 @@ def recognize_faces_with_face_locations(frame, face_locations, reference_encodin
     return False, None
 
 
+def recognize_faces_with_basic_interpreter(frame, face_locations, reference_encodings):
+    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+    rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+    face_encodings = fr.face_encodings(rgb_small_frame, face_locations)
+    for face_encoding in face_encodings:
+        if face_encodings:
+            logging.info('Face detected in frame')
+            matches = fr.compare_faces(reference_encodings, face_encoding)
+            face_distances = fr.face_distance(reference_encodings, face_encoding)
+            best_match_index = np.argmin(face_distances)
+            if best_match_index > len(matches):
+                logging.error(f'Error in face image in backend. Please change backend images')
+                return False, None
+            if matches[best_match_index]:
+                return True, best_match_index
+    return False, None
+
+
 face_recognizers = {
     'mtcnn': recognize_faces_with_face_locations,
     'cascade': recognize_faces_with_faces,
-    'inbuilt': recognize_faces_with_face_locations
+    'inbuilt': recognize_faces_with_face_locations,
+    'VNoU': recognize_faces_with_basic_interpreter
 }
 
 face_detector = {
     'mtcnn': detect_faces_with_mtcnn,
     'cascade': detect_faces_with_haarcascade,
-    'inbuilt': detect_faces_with_fr_inbuilt_models
+    'inbuilt': detect_faces_with_fr_inbuilt_models,
+    'VNoU': detect_faces_with_basic_interpreter
 }
 
 

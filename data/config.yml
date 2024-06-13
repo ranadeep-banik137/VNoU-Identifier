@@ -12,10 +12,11 @@ app_default:
   log-formatter: '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
 
 #App arguments
-# face-recognition-model can have three values 1. mtcnn 2. cascade 3. inbuilt
+# face-recognition-model can have three values 1. mtcnn 2. cascade 3. inbuilt 4. VNoU
 # mtcnn : It is slight faster and will capture accurate faces but has to be in proper position of camera
 # cascade: it uses hog model which is very fast but lack in accuracy (uses haarcascade_frontalface_default.xml to detect face)
 # inbuilt: It used in-build face_recognition location identifiers which is pretty slow
+# VNoU: Very fast and 90% accurate assembled with various face conditions (A little tilted/frontal/left/right identification)
 # NOTE: If you choose 'inbuilt', make sure to populate 'face-location-identifier-model' under face_recognition.
 # Values for 'face-location-identifier-model' would be 'cnn' & 'hog'
 # "hog" is less accurate but faster on CPUs.

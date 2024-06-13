@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import cv2
 import face_recognition as fr
 from tqdm import tqdm
 from modules.database import fetch_table_data_in_tuples
@@ -56,9 +57,11 @@ def process_encoding(rows, desc='Encoding backend files'):
             binary_img = row[2]
             image_path = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
             reference_image = fr.load_image_file(image_path)
-            encoding = fr.face_encodings(reference_image)
-            if encoding and name.strip() != '':
-                reference_encodings.append(encoding[0])
+            # encoding = fr.face_encodings(reference_image)
+            rgb_image = cv2.cvtColor(reference_image, cv2.COLOR_BGR2RGB)
+            encodings = fr.face_encodings(rgb_image, fr.face_locations(rgb_image))
+            if encodings and name.strip() != '':
+                reference_encodings.append(encodings[0])
                 names.append(name)
             remove_file(image_path)
             pbar.update(1)
