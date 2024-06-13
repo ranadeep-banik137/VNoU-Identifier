@@ -38,5 +38,5 @@ def main(n):
 
 
 if __name__ == "__main__":
-    number_of_users = 1000  # Set the number of users to fetch and insert
+    number_of_users = 100  # Set the number of users to fetch and insert
     main(number_of_users)
