@@ -19,60 +19,43 @@ from modules.config_reader import read_config
 config = read_config()
 
 
-def detect_faces_with_haarcascade(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.equalizeHist(gray)
-    faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray,
-                                                                                                                  scaleFactor=1.1,
-                                                                                                                  minNeighbors=5,
-                                                                                                                  minSize=(
-                                                                                                                      30,
-                                                                                                                      30))
-    return faces
-
-
-def detect_faces_with_mtcnn(image):
-    detector = MTCNN()
-    faces = detector.detect_faces(image)
-    face_locations = [(face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0])
-                      for face in faces]
+def detect_face_locations(image, model):
+    face_locations = None
+    match model:
+        case 'mtcnn':
+            detector = MTCNN()
+            frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            faces = detector.detect_faces(frame)
+            face_locations = [
+                (face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0])
+                for face in faces]
+        case 'cascade':
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray = cv2.equalizeHist(gray)
+            faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            face_locations = []
+            for (x, y, w, h) in faces:
+                face_locations.append((y, x + w, y + h, x))
+        case 'VNoU':
+            # small_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
+            rgb_small_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            face_locations = fr.face_locations(rgb_small_frame)
+        case 'inbuilt':
+            rgb_frame = image[:, :, ::]
+            face_locations = fr.face_locations(rgb_frame, model=os.getenv('FACE_LOCATION_IDENTIFIER_MODEL', config['face_recognition']['face-location-identifier-model']))
+        case _:
+            face_locations = []
     return face_locations
 
 
-def detect_faces_with_fr_inbuilt_models(image):
-    image = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
-    rgb_frame = image[:, :, ::]
-    face_locations = fr.face_locations(rgb_frame,
-                                       model=os.getenv('FACE_LOCATION_IDENTIFIER_MODEL', config['face_recognition']['face-location-identifier-model']))
-    return face_locations
-
-
-def detect_faces_with_basic_interpreter(image):
-    small_frame = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
-    rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-    face_locations = fr.face_locations(rgb_small_frame)
-    return face_locations
-
-
-def recognize_faces_with_faces(frame, faces, reference_encodings):
-    rgb_frame = frame[:, :, ::]
-    for (x, y, w, h) in faces:
-        face_location = (y, x + w, y + h, x)
-
-        # Extract the face encoding for the given face location
-        face_encodings = fr.face_encodings(rgb_frame, known_face_locations=[face_location], num_jitters=1)
-        if face_encodings:
-            face_encoding = face_encodings[0]
-            logging.info('Face detected in frame')
-            matches = fr.compare_faces(reference_encodings, face_encoding)
-            if True in matches:
-                return True, matches.index(True)
-    return False, None
-
-
-def recognize_faces_with_face_locations(frame, face_locations, reference_encodings):
-    rgb_frame = frame[:, :, ::]
-    face_encodings = fr.face_encodings(rgb_frame, face_locations) if face_locations else fr.face_encodings(rgb_frame)
+def recognize_faces(frame, face_locations, reference_encodings, model):
+    match model:
+        case 'VNoU':
+            # small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        case _:
+            frame = frame[:, :, ::]
+    face_encodings = fr.face_encodings(frame, known_face_locations=face_locations, num_jitters=1)
     for face_encoding in face_encodings:
         if face_encodings:
             logging.info('Face detected in frame')
@@ -85,39 +68,6 @@ def recognize_faces_with_face_locations(frame, face_locations, reference_encodin
             if matches[best_match_index]:
                 return True, best_match_index
     return False, None
-
-
-def recognize_faces_with_basic_interpreter(frame, face_locations, reference_encodings):
-    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-    rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-    face_encodings = fr.face_encodings(rgb_small_frame, face_locations)
-    for face_encoding in face_encodings:
-        if face_encodings:
-            logging.info('Face detected in frame')
-            matches = fr.compare_faces(reference_encodings, face_encoding)
-            face_distances = fr.face_distance(reference_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            if best_match_index > len(matches):
-                logging.error(f'Error in face image in backend. Please change backend images')
-                return False, None
-            if matches[best_match_index]:
-                return True, best_match_index
-    return False, None
-
-
-face_recognizers = {
-    'mtcnn': recognize_faces_with_face_locations,
-    'cascade': recognize_faces_with_faces,
-    'inbuilt': recognize_faces_with_face_locations,
-    'VNoU': recognize_faces_with_basic_interpreter
-}
-
-face_detector = {
-    'mtcnn': detect_faces_with_mtcnn,
-    'cascade': detect_faces_with_haarcascade,
-    'inbuilt': detect_faces_with_fr_inbuilt_models,
-    'VNoU': detect_faces_with_basic_interpreter
-}
 
 
 def run_face_recognition():
@@ -145,10 +95,9 @@ def run_face_recognition():
             continue
         if ret:
             face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', face_config['face-recognition-model'])
-            face_locations = face_detector[face_detect_model](frame)
+            face_locations = detect_face_locations(frame, face_detect_model)
             if len(face_locations) > 0:
-                match_found, match_index = face_recognizers[face_detect_model](frame, face_locations,
-                                                                               reference_encodings)
+                match_found, match_index = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
                 if match_found:
                     name = names[match_index]
                     logging.info(f"Face identified as: {name}")
@@ -190,7 +139,7 @@ def update_timer_for_user_in_background(name, valid_for_seconds=int(
     elif not int(current_time) <= convert_into_epoch(
             str(fetch_table_data_in_tuples('', query_data.VALID_TILL_FOR_ID % _id)[0][0])):
         update_table(update_data.UPDATE_ALL_TIMESTAMPS_WITH_IDENTIFIER % (
-        0, valid_till_timestamp, timestamp, (visit_count + 1), _id))
+            0, valid_till_timestamp, timestamp, (visit_count + 1), _id))
         logging.debug(f'User {name} updated valid till date and visit count in identification records table')
     else:
         update_table(update_data.UPDATE_VISIT_COUNT % (timestamp, (visit_count + 1), _id))
