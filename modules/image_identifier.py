@@ -19,6 +19,53 @@ from modules.config_reader import read_config
 config = read_config()
 
 
+def detect_blurry_variance(frame):
+    is_face_blurred = False
+    blur_threshold = 100
+    variance = cv2.Laplacian(frame, cv2.CV_64F).var()
+    if variance < blur_threshold:
+        is_face_blurred = True
+        logging.info("Face is blurred or not properly detected.")
+    else:
+        is_face_blurred = False
+        logging.info("Face is clear.")
+
+
+def detect_face_angle_for_face(frame):
+    list_of_face_angles = []
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    face_locations = fr.face_locations(rgb_frame)
+    # Detect facial landmarks
+    face_landmarks_list = fr.face_landmarks(rgb_frame)
+
+    for face_landmarks in face_landmarks_list:
+        # Extract the coordinates of the left eye, right eye, and nose tip
+        left_eye = face_landmarks['left_eye']
+        right_eye = face_landmarks['right_eye']
+        nose_tip = face_landmarks['nose_tip']
+
+        # Compute the center points of the eyes
+        left_eye_center = np.mean(left_eye, axis=0)
+        right_eye_center = np.mean(right_eye, axis=0)
+
+        # Calculate the angle between the eyes
+        eye_delta_x = right_eye_center[0] - left_eye_center[0]
+        eye_delta_y = right_eye_center[1] - left_eye_center[1]
+        angle = np.arctan2(eye_delta_y, eye_delta_x) * 180.0 / np.pi
+        print(f'Face tilt angle: {angle:.2f} degrees')
+
+        # Determine if the face is tilted
+        if abs(angle) > 10:  # You can adjust the threshold angle as needed
+            logging.info("Face is tilted.")
+            list_of_face_angles.append(True)
+        else:
+            logging.info("Face is frontal.")
+            list_of_face_angles.append(False)
+    num_true = list_of_face_angles.count(True)
+    num_false = list_of_face_angles.count(False)
+    return num_true >= num_false
+
+
 def detect_face_locations(image, model):
     face_locations = None
     match model:
@@ -26,6 +73,7 @@ def detect_face_locations(image, model):
             detector = MTCNN()
             frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             faces = detector.detect_faces(frame)
+            # detect_face_angle(faces)
             face_locations = [
                 (face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0])
                 for face in faces]
@@ -38,11 +86,8 @@ def detect_face_locations(image, model):
                 face_locations.append((y, x + w, y + h, x))
         case 'VNoU':
             # small_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
-            rgb_small_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            face_locations = fr.face_locations(rgb_small_frame)
-        case 'inbuilt':
-            rgb_frame = image[:, :, ::]
-            face_locations = fr.face_locations(rgb_frame, model=os.getenv('FACE_LOCATION_IDENTIFIER_MODEL', config['face_recognition']['face-location-identifier-model']))
+            rgb_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            face_locations = fr.face_locations(rgb_frame)
         case _:
             face_locations = []
     return face_locations
@@ -50,10 +95,11 @@ def detect_face_locations(image, model):
 
 def recognize_faces(frame, face_locations, reference_encodings, model):
     match model:
-        case 'VNoU':
+        case 'cascade':
             # small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         case _:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = frame[:, :, ::]
     face_encodings = fr.face_encodings(frame, known_face_locations=face_locations, num_jitters=1)
     for face_encoding in face_encodings:
@@ -84,6 +130,7 @@ def run_face_recognition():
     frame_count = 0
 
     while True:
+        frame_fail_count = 0
         reference_encodings, names = process_db_data()
         update_valid_till_for_expired()
         ret, frame = cap.read()
@@ -97,6 +144,12 @@ def run_face_recognition():
             face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', face_config['face-recognition-model'])
             face_locations = detect_face_locations(frame, face_detect_model)
             if len(face_locations) > 0:
+                if detect_blurry_variance(frame):
+                    logging.info('The face is blurred. Please stand still for better detection')
+                    continue
+                if detect_face_angle_for_face(frame):
+                    logging.info('The face is titled. So cannot process. Please face straight towards the camera')
+                    continue
                 match_found, match_index = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
                 if match_found:
                     name = names[match_index]
@@ -114,6 +167,11 @@ def run_face_recognition():
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         else:
+            frame_fail_count += 1
+            if frame_fail_count >= int(os.getenv('FRAME_MAX_RESET_COUNT', face_config['frame-max-reset-seconds'])):
+                time.sleep(1)  # Wait for 1 second
+                logging.error(f'Frame loading timed out after {int(os.getenv("FRAME_RESET_COUNT", face_config["frame-max-reset-seconds"]))} seconds')
+                break
             logging.warning('Frame not loaded correctly. Loading next frame..')
             continue
     threading.Thread(target=delete_similar_images, args=(face_config['save-unknown-image-filepath'],)).start()
@@ -121,7 +179,7 @@ def run_face_recognition():
 
 
 def update_timer_for_user_in_background(name, valid_for_seconds=int(
-    os.getenv('VOICE_EXPIRY_SECONDS', config['face_recognition']['voice-command-expiry']))):
+        os.getenv('VOICE_EXPIRY_SECONDS', config['face_recognition']['voice-command-expiry']))):
     current_time = time.time()
     timestamp = datetime.datetime.fromtimestamp(current_time).strftime(config['app_default']['timestamp-format'])
     valid_till_timestamp = datetime.datetime.fromtimestamp(int(current_time) + valid_for_seconds).strftime(
