@@ -23,7 +23,7 @@ face_recognition:
   frame-rate-range: 5
   capture-unknown-face: False
   voice-command-expiry: 3600
-  delete-img-similarity-percentage: 20
+  delete-img-similarity-percentage: 90
   supported-img-files: ['.jpg', '.jpeg', '.png', '.img']
   face-recognition-model: 'VNoU'
   cache-expiry: 120
