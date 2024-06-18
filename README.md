@@ -1,6 +1,23 @@
 <h1 align="center">Hi 👋, I'm Ranadeep Banik</h1>
 <h3 align="center">The name of this app is VNoU (Sounds familiar as WE KNOW YOU!). It maintains/records data in storage (encoded) and through the camera device installed, it verifies the same person's activity/presence and record logs</h3>
+<h4 align="center">The face recognition is done applying different models (pre-trained)</h4>
+<h5 align="left">- 💻 mtcnn : It is slight faster and will capture accurate faces but has to be in proper position of camera</h5> 
+<h5 align="left">- 💻 cascade : it uses hog model which is very fast but lack in accuracy (uses haarcascade_frontalface_default.xml to detect face)</h5>
+<h5 align="left">- 💻 VNoU(Our own trained model) : Very fast and 90% accurate assembled with various face conditions (A little tilted/frontal/left/right identification)</h5>
+
+<h6 align="center">Note: There are adjustments needed to be done in configuration based on camera types and lighting for the face detection accuracy </h6>
+
+<h8 align="left">face_config: </h8>
+
+<h9 align="left">1. img-blur-threshold-percentage should be 20 (ideal for webcam)</h9>
+
+<h9 align="left">2. img-tilt-threshold-angle should be 10 (ideal for normal tilt-ness of face)</h9>
+
+<h7 align="left">For the laplacian image, it is edged image. Make images using GaussianBlur with different r, then do laplacian filter on them, and calculate the vars:</h7>
+
 <p align="center"> <img src="https://i.sstatic.net/aS7YF.jpg"/></p>
+
+<h5 align="left">The blured image's edge is smoothed, so the variance is little.</h5>
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ranadeep-banik137&label=Profile%20views&color=0e75b6&style=flat" alt="ranadeep-banik137" /> </p>
 
 <p align="left"> <a href="https://github.com/ryo-ma/github-profile-trophy"><img src="https://github-profile-trophy.vercel.app/?username=ranadeep-banik137" alt="ranadeep-banik137" /></a> </p>
