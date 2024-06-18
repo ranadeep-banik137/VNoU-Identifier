@@ -1,4 +1,4 @@
-opencv-python~=4.9.0.80
+opencv-python~=4.10.0
 git+https://github.com/ageitgey/face_recognition_models
 face-recognition
 mysql-connector-python~=8.1.0
@@ -10,9 +10,15 @@ excel2json-3
 pandas~=2.0.3
 numpy~=1.26.4
 pydub~=0.25.1
-DeepImageSearch
+DeepImageSearch~=2.5
 flask
-pillow
-watchdog
-pyttsx3
+pillow~=10.3.0
+watchdog~=4.0.0
+pyttsx3~=2.90
 googletrans==4.0.0-rc1
+PyYAML~=6.0.1
+mtcnn~=0.1.1
+tensorflow
+requests~=2.31.0
+tqdm~=4.66.4
+imutils~=0.5.4

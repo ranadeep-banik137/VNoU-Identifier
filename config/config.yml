@@ -1,0 +1,35 @@
+# MySQL credentials (Confidential file)
+database:
+  host: 'localhost'
+  port: '3306'
+  user: 'ranadeep'
+  password: 'rana#123'
+  db: 'profiles'
+
+app_default:
+  timestamp-format: '%Y-%m-%d %H:%M:%S'
+  log-level: 'INFO'
+  log-formatter: '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+  save-db-data-to-local: True
+
+# App arguments
+# face-recognition-model can have three values 1. mtcnn 2. cascade 3. VNoU
+# mtcnn : It is slight faster and will capture accurate faces but has to be in proper position of camera
+# cascade: it uses hog model which is very fast but lack in accuracy (uses haarcascade_frontalface_default.xml to detect face)
+# VNoU: Very fast and 90% accurate assembled with various face conditions (A little tilted/frontal/left/right identification)
+# Accuracy depends mainly on Camera & frame visibility
+face_recognition:
+  camera-index: 0
+  frame-rate-range: 5
+  capture-unknown-face: False
+  voice-command-expiry: 3600
+  delete-img-similarity-percentage: 90
+  supported-img-files: ['.jpg', '.jpeg', '.png', '.img']
+  face-recognition-model: 'VNoU'
+  cache-expiry: 120
+  frame-max-reset-seconds: 60
+
+#Directory
+files:
+  save-unknown-image-filepath: 'captured/'
+  incoming-img-filepath: 'gui/uploads'

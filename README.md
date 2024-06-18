@@ -1,5 +1,5 @@
 <h1 align="center">Hi 👋, I'm Ranadeep Banik</h1>
-<h3 align="center">The name of this app is VNoU (Sounds familiar as WE KNOW YOU!). It maintains/records data in storage (encoded) and through the camera device installed, it verifies the same person's activity/presence</h3>
+<h3 align="center">The name of this app is VNoU (Sounds familiar as WE KNOW YOU!). It maintains/records data in storage (encoded) and through the camera device installed, it verifies the same person's activity/presence and record logs</h3>
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ranadeep-banik137&label=Profile%20views&color=0e75b6&style=flat" alt="ranadeep-banik137" /> </p>
 

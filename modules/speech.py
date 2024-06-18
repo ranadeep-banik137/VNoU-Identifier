@@ -9,8 +9,11 @@ from playsound import playsound
 from googletrans import Translator
 from modules.database import fetch_table_data_in_tuples, populate_identification_record
 from constants.db_constansts import query_data
+from modules.config_reader import read_config
 from pydub import AudioSegment
 from pydub.playback import play
+
+config = read_config()
 
 
 def play_speech(input_name=''):
@@ -18,14 +21,14 @@ def play_speech(input_name=''):
     if input_name == 'None' or input_name is None or input_name == '':
         pass
     else:
-        text_val = f'Sorry, I cannot identify your face currently. Please stand in front of the camera for a while' if input_name == 'Unknown Face' else f'Welcome {input_name}. I am AI robot identified your face and authenticated'
+        text_val = f'Sorry, I cannot identify your face currently. Please stand in front of the camera for a while' if input_name == 'Unknown Face' else f'Welcome {input_name}. I cannot interact with you but good to see you here. Have a nice day {input_name}'
         logging.info(f'User identified as {input_name}' if input_name != "Unknown Face" else '')
         # Here are converting in English Language
         language = 'en'
         speech_file_name = input_name.split(' ')[0] + '_' + re.sub("[^\w]", "_",
                                                                    datetime.datetime.fromtimestamp(
                                                                        time.time()).strftime(
-                                                                       "%Y-%m-%d %H:%M:%S"))
+                                                                       config['app_default']['timestamp-format']))
         # Passing the text and language to the engine,
         # here we have assign slow=False. Which denotes
         # the module that the transformed audio should
