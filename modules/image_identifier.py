@@ -14,6 +14,7 @@ from constants.db_constansts import query_data, update_data, Tables
 from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
 from modules.config_reader import read_config
+from modules.app_logger import log_transaction
 
 config = read_config()
 
@@ -55,6 +56,7 @@ def run_face_recognition():
                 if match_found:
                     name = names[match_index]
                     logging.info(f"Face identified as: {name}")
+                    threading.Thread(target=log_transaction, args=(frame_count,name,face_detect_model,)).start()
                     threading.Thread(target=play_speech, args=(name,)).start()
                     threading.Thread(target=update_timer_for_user_in_background, args=(name,)).start()
                     continue
