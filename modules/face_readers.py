@@ -3,6 +3,9 @@ import logging
 import numpy as np
 import face_recognition as fr
 from mtcnn import MTCNN
+from modules.config_reader import read_config
+
+config = read_config()
 
 
 def calculate_face_angle(left_eye_center, right_eye_center):
@@ -13,7 +16,7 @@ def calculate_face_angle(left_eye_center, right_eye_center):
 
 def detect_blurry_variance(frame):
     is_face_blurred = False
-    blur_threshold = 30
+    blur_threshold = int(config['face_config']['img-blur-threshold-percentage'])
     variance = cv2.Laplacian(frame, cv2.CV_64F).var()
     if variance < blur_threshold:
         is_face_blurred = True
@@ -44,14 +47,14 @@ def detect_face_angle_for_face(frame):
         right_eye_center = np.mean(right_eye, axis=0)
 
         # Calculate the angle between the eyes
-        #eye_delta_x = right_eye_center[0] - left_eye_center[0]
-        #eye_delta_y = right_eye_center[1] - left_eye_center[1]
-        #angle = np.arctan2(eye_delta_y, eye_delta_x) * 180.0 / np.pi
+        # eye_delta_x = right_eye_center[0] - left_eye_center[0]
+        # eye_delta_y = right_eye_center[1] - left_eye_center[1]
+        # angle = np.arctan2(eye_delta_y, eye_delta_x) * 180.0 / np.pi
         angle = calculate_face_angle(left_eye_center, right_eye_center)
         logging.debug(f'Face tilt angle: {angle:.2f} degrees')
 
         # Determine if the face is tilted
-        if abs(angle) > 10:  # You can adjust the threshold angle as needed
+        if abs(angle) > int(config['face_config']['img-tilt-threshold-angle']):  # You can adjust the threshold angle as needed
             logging.info("Face is tilted.")
             list_of_face_angles.append(True)
         else:

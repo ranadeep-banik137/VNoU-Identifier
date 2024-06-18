@@ -29,7 +29,15 @@ face_recognition:
   cache-expiry: 120
   frame-max-reset-seconds: 60
 
-#Directory
+# Directory
 files:
   save-unknown-image-filepath: 'captured/'
   incoming-img-filepath: 'gui/uploads'
+
+# This has to be updated based on camera quality and light around.
+# Note: For considerable performance, it is best to put
+# - blur threshold as 20 (for webcam of poor quality)
+# - tilt angle threshold as 10
+face_config:
+  img-blur-threshold-percentage: 20
+  img-tilt-threshold-angle: 10
