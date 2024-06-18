@@ -6,8 +6,7 @@ import time
 import datetime
 import logging
 import numpy as np
-import face_recognition as fr
-from mtcnn import MTCNN
+from modules.face_readers import detect_face_angle_for_face, detect_blurry_variance, recognize_faces, detect_face_locations
 from modules.speech import play_speech
 from modules.database import fetch_table_data_in_tuples, populate_identification_record, update_table, fetch_table_data
 from modules.data_cache import process_db_data
@@ -17,103 +16,6 @@ from DeepImageSearch import Load_Data
 from modules.config_reader import read_config
 
 config = read_config()
-
-
-def detect_blurry_variance(frame):
-    is_face_blurred = False
-    blur_threshold = 100
-    variance = cv2.Laplacian(frame, cv2.CV_64F).var()
-    if variance < blur_threshold:
-        is_face_blurred = True
-        logging.info("Face is blurred or not properly detected.")
-    else:
-        is_face_blurred = False
-        logging.info("Face is clear.")
-
-
-def detect_face_angle_for_face(frame):
-    list_of_face_angles = []
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    face_locations = fr.face_locations(rgb_frame)
-    # Detect facial landmarks
-    face_landmarks_list = fr.face_landmarks(rgb_frame)
-
-    for face_landmarks in face_landmarks_list:
-        # Extract the coordinates of the left eye, right eye, and nose tip
-        left_eye = face_landmarks['left_eye']
-        right_eye = face_landmarks['right_eye']
-        nose_tip = face_landmarks['nose_tip']
-
-        # Compute the center points of the eyes
-        left_eye_center = np.mean(left_eye, axis=0)
-        right_eye_center = np.mean(right_eye, axis=0)
-
-        # Calculate the angle between the eyes
-        eye_delta_x = right_eye_center[0] - left_eye_center[0]
-        eye_delta_y = right_eye_center[1] - left_eye_center[1]
-        angle = np.arctan2(eye_delta_y, eye_delta_x) * 180.0 / np.pi
-        print(f'Face tilt angle: {angle:.2f} degrees')
-
-        # Determine if the face is tilted
-        if abs(angle) > 10:  # You can adjust the threshold angle as needed
-            logging.info("Face is tilted.")
-            list_of_face_angles.append(True)
-        else:
-            logging.info("Face is frontal.")
-            list_of_face_angles.append(False)
-    num_true = list_of_face_angles.count(True)
-    num_false = list_of_face_angles.count(False)
-    return num_true >= num_false
-
-
-def detect_face_locations(image, model):
-    face_locations = None
-    match model:
-        case 'mtcnn':
-            detector = MTCNN()
-            frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            faces = detector.detect_faces(frame)
-            # detect_face_angle(faces)
-            face_locations = [
-                (face['box'][1], face['box'][0] + face['box'][2], face['box'][1] + face['box'][3], face['box'][0])
-                for face in faces]
-        case 'cascade':
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            gray = cv2.equalizeHist(gray)
-            faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-            face_locations = []
-            for (x, y, w, h) in faces:
-                face_locations.append((y, x + w, y + h, x))
-        case 'VNoU':
-            # small_frame = cv2.resize(image, (0, 0), fx=0.5, fy=0.5)
-            rgb_frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            face_locations = fr.face_locations(rgb_frame)
-        case _:
-            face_locations = []
-    return face_locations
-
-
-def recognize_faces(frame, face_locations, reference_encodings, model):
-    match model:
-        case 'cascade':
-            # small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        case _:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = frame[:, :, ::]
-    face_encodings = fr.face_encodings(frame, known_face_locations=face_locations, num_jitters=1)
-    for face_encoding in face_encodings:
-        if face_encodings:
-            logging.info('Face detected in frame')
-            matches = fr.compare_faces(reference_encodings, face_encoding)
-            face_distances = fr.face_distance(reference_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            if best_match_index > len(matches):
-                logging.error(f'Error in face image in backend. Please change backend images')
-                return False, None
-            if matches[best_match_index]:
-                return True, best_match_index
-    return False, None
 
 
 def run_face_recognition():
@@ -128,9 +30,8 @@ def run_face_recognition():
                   face_config['frame-rate-range']))  # Adjust this value to balance performance and accuracy
     logging.info(f'Frames will be skipped every {process_every_n_frames} seconds')
     frame_count = 0
-
+    frame_fail_count = 0
     while True:
-        frame_fail_count = 0
         reference_encodings, names = process_db_data()
         update_valid_till_for_expired()
         ret, frame = cap.read()
@@ -145,10 +46,10 @@ def run_face_recognition():
             face_locations = detect_face_locations(frame, face_detect_model)
             if len(face_locations) > 0:
                 if detect_blurry_variance(frame):
-                    logging.info('The face is blurred. Please stand still for better detection')
+                    logging.info('The frame is blurred. Retrying with next frame')
                     continue
                 if detect_face_angle_for_face(frame):
-                    logging.info('The face is titled. So cannot process. Please face straight towards the camera')
+                    logging.info('The face seems tilted. Retrying for frontal detection')
                     continue
                 match_found, match_index = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
                 if match_found:
@@ -168,13 +69,13 @@ def run_face_recognition():
                 break
         else:
             frame_fail_count += 1
-            if frame_fail_count >= int(os.getenv('FRAME_MAX_RESET_COUNT', face_config['frame-max-reset-seconds'])):
-                time.sleep(1)  # Wait for 1 second
-                logging.error(f'Frame loading timed out after {int(os.getenv("FRAME_RESET_COUNT", face_config["frame-max-reset-seconds"]))} seconds')
+            if frame_fail_count > int(os.getenv('FRAME_MAX_RESET_COUNT', face_config['frame-max-reset-seconds'])):
+                time.sleep(0.5)  # Wait for 1 second
+                logging.error(f'Frame loading timed out after {frame_fail_count} seconds')
                 break
             logging.warning('Frame not loaded correctly. Loading next frame..')
             continue
-    threading.Thread(target=delete_similar_images, args=(face_config['save-unknown-image-filepath'],)).start()
+    threading.Thread(target=delete_similar_images, args=(config['files']['save-unknown-image-filepath'],)).start()
     cap.release()
 
 

@@ -3,7 +3,7 @@ import logging
 
 
 # Read the YAML file
-def read_config(config_path='data/config.yml'):
+def read_config(config_path='config/config.yml'):
     config = None
     try:
         with open(config_path, 'r') as file:

@@ -76,3 +76,9 @@ def get_missing_items_from_tuple_list(main_list, latest_list):
         if item not in main_set:
             missing_items.append(item)
     return missing_items
+
+
+def make_dir_if_not_exist(file_path):
+    if not os.path.exists(file_path):
+        with open(file_path, mode='w', newline='') as file:
+            return file

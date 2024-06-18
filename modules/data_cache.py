@@ -55,7 +55,7 @@ def process_encoding(rows, desc='Encoding backend files'):
         for row in get_data():
             name = row[1]
             binary_img = row[2]
-            image_path = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}data/test{row[0]}.jpg')
+            image_path = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}faces/{row[0]}_{name}.jpg')
             reference_image = fr.load_image_file(image_path)
             # encoding = fr.face_encodings(reference_image)
             rgb_image = cv2.cvtColor(reference_image, cv2.COLOR_BGR2RGB)
@@ -63,6 +63,7 @@ def process_encoding(rows, desc='Encoding backend files'):
             if encodings and name.strip() != '':
                 reference_encodings.append(encodings[0])
                 names.append(name)
-            remove_file(image_path)
+            if not os.getenv('SAVE_DB_DATA_TO_LOCAL', config['app_default']['save-db-data-to-local']):
+                remove_file(image_path)
             pbar.update(1)
     return reference_encodings, names
