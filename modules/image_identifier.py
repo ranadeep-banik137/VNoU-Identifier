@@ -15,9 +15,10 @@ from modules.date_time_converter import convert_into_epoch
 from DeepImageSearch import Load_Data
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction
+from modules.triggers import trigger_mail
 
 config = read_config()
-
+event_thread = threading.Event()
 
 def run_face_recognition():
     face_config = config['face_recognition']
@@ -56,9 +57,17 @@ def run_face_recognition():
                 if match_found:
                     name = names[match_index]
                     logging.info(f"Face identified as: {name}")
-                    threading.Thread(target=log_transaction, args=(frame_count,name,face_detect_model,)).start()
-                    threading.Thread(target=play_speech, args=(name,)).start()
-                    threading.Thread(target=update_timer_for_user_in_background, args=(name,)).start()
+                    log_thread = threading.Thread(target=log_transaction, args=(frame_count, name, face_detect_model,))
+                    speech_thread = threading.Thread(target=play_speech, args=(name,))
+                    mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_unknown_face_img(frame)]))
+                    timer_thread = threading.Thread(target=update_timer_for_user_in_background, args=(name,))
+                    speech_thread.start()
+                    mail_thread.start()
+                    speech_thread.join()
+                    mail_thread.join()
+                    event_thread.set()
+                    timer_thread.start()
+                    log_thread.start()
                     continue
                 else:
                     if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):
@@ -120,8 +129,10 @@ def update_valid_till_for_expired():
 def capture_unknown_face_img(frame, filepath=config['files']['save-unknown-image-filepath']):
     file_name = re.sub("[^\w]", "_",
                        datetime.datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
+    write_file_name = f"{filepath}VNoU_{file_name}.jpg"
     cv2.imwrite(f"{filepath}VNoU_{file_name}.jpg", frame)
     logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
+    return write_file_name
 
 
 def delete_similar_images(filepath):

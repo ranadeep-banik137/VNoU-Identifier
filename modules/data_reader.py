@@ -78,6 +78,10 @@ def get_missing_items_from_tuple_list(main_list, latest_list):
     return missing_items
 
 
+def fetch_first_element_in_tuple(tuple_data):
+    return tuple_data[0][0] if tuple_data else None
+
+
 def make_dir_if_not_exist(file_path):
     if not os.path.exists(file_path):
         with open(file_path, mode='w', newline='') as file:
