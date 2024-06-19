@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from modules.config_reader import read_config
-
+from modules.data_reader import remove_file
 
 config = read_config()
 
@@ -56,13 +56,16 @@ def set_message_for_mail(message, body, image_files=[]):
     body = "This email contains images" if body.strip() == '' else body
     message.attach(MIMEText(body, "plain"))
     # image_files = ["../faces/Rana1.jpg"]
-
+    delete_img_after_mail_post = config['mail']['delete-local-image']
     # Attach images to the email
     for image_file in image_files:
         try:
             with open(image_file, "rb") as attachment:
                 part = MIMEImage(attachment.read(), name=os.path.basename(image_file))
                 message.attach(part)
+                # if delete_img_after_mail_post:
+                    # remove_file(image_file)
+                # TODO to delete the images after posting email
         except FileNotFoundError:
             print(f"Attachment file {image_file} not found")
     return message

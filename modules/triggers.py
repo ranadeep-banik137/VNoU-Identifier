@@ -5,7 +5,7 @@ from modules.database import fetch_table_data_in_tuples
 from constants.db_constansts import query_data
 from modules.mail_generators import send_mail
 from modules.config_reader import read_config
-from modules.data_fetcher import is_user_already_identified
+from modules.db_miscellaneous import is_user_already_identified
 from modules.data_reader import fetch_first_element_in_tuple
 
 config = read_config()
@@ -28,7 +28,7 @@ def trigger_mail(name, images=[]):
         subject = 'User detection email' if len(images) > 0 else '[No Reply] User detection mail'
         body = f"""Hi {name},
 
-Hope you’re in the pink of health. This message to enquire about your presence noticed at VNoU Solutions.
+Hope you’re in the pink of health. This message is to enquire about your presence noticed at VNoU Solutions.
 
 Our system has identified you visiting at our VNoU location at {identified_at if identified_at is not None else datetime.datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])}.
 In case of any further help needed please contact below:
@@ -36,7 +36,7 @@ In case of any further help needed please contact below:
 - helpline number : 00011123498.
 - Website : https://www.vnou-solutions.com/assist
             
-We hope you have a pleasant day.
+We wish you have a pleasant day.
             
 {img_text if len(images) > 0 else ''}
             

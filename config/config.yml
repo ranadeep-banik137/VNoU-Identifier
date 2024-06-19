@@ -11,7 +11,8 @@ mail:
   port: 587
   id: 'vnou.solutions@gmail.com'
   password: 'vuyy bnte xxbq ujku'
-  mail_password: 'VNoU#123'
+  mail-password: 'VNoU#123'
+  delete-local-image: True
 
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'

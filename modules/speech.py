@@ -12,7 +12,7 @@ from constants.db_constansts import query_data
 from modules.config_reader import read_config
 from pydub import AudioSegment
 from pydub.playback import play
-from modules.data_fetcher import is_user_already_identified
+from modules.db_miscellaneous import is_user_already_identified
 
 config = read_config()
 
