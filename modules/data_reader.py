@@ -47,6 +47,10 @@ def get_file_names(folder_path=f'{os.getenv("PROJECT_PATH") or ""}img'):
     return [file_name for file_name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file_name))]
 
 
+def get_file_names_excluding_file(folder_path=f'{os.getenv("PROJECT_PATH") or ""}img', exclude_file_name=''):
+    return [file_name for file_name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file_name)) and file_name != exclude_file_name]
+
+
 def is_img_file(file_path):
     flag = False
     if os.path.basename(file_path) in ['.jpg', '.jpeg', '.png', '.img']:

@@ -36,11 +36,6 @@ def update_config(config_path='config/config.yml', config_data=''):
 
 
 def clear_yaml_file(config_path='config/config.yml'):
-    # Read existing YAML data
-    data = read_config(config_path)
-
-    # Clear the data (replace with empty structure)
-    data = ''  # or data = [] if your YAML file contains a list
-
-    # Write the empty data back to the YAML file
-    update_config(config_path, data)
+    # Open the YAML file in write mode and truncate its content
+    with open(config_path, 'w') as f:
+        f.truncate(0)
