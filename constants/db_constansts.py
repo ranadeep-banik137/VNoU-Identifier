@@ -1,7 +1,7 @@
 class create_table_queries:
     USERS = "CREATE TABLE IF NOT EXISTS \
 			users (userID INT AUTO_INCREMENT PRIMARY KEY, name TEXT NOT NULL,\
-			userImg LONGBLOB NOT NULL, contact TEXT, address TEXT, city TEXT, state TEXT, country TEXT)"
+			userImg LONGBLOB NOT NULL, contact TEXT, email TEXT, address TEXT, city TEXT, state TEXT, country TEXT)"
 
     IDENTIFICATION_RECORDS = "CREATE TABLE IF NOT EXISTS \
 			identification_records (userID INT, FOREIGN KEY (userID) REFERENCES users(userID), is_identified BOOL NOT NULL,\
@@ -9,12 +9,13 @@ class create_table_queries:
 
 
 class insert_table_queries:
-    USERS = """INSERT INTO users (name, userImg, contact, address, city, state, country)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)
+    USERS = """INSERT INTO users (name, userImg, contact, email, address, city, state, country)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                ON DUPLICATE KEY UPDATE
                name = VALUES(name),
                userImg = VALUES(userImg),
                contact = VALUES(contact),
+               email = VALUES(email),
                address = VALUES(address),
                city = VALUES(city),
                state = VALUES(state),
@@ -22,8 +23,8 @@ class insert_table_queries:
                """
 
     USERS_IF_FAILED = "INSERT INTO users\
-			(name,userImg,contact,address,city,state,country)\
-					VALUES(%s,%s,%s,%s,%s,%s,%s)"
+			(name,userImg,contact,email,address,city,state,country)\
+					VALUES(%s,%s,%s,%s,%s,%s,%s,%s)"
 
     IDENTIFICATION_RECORDS = "INSERT INTO identification_records\
 			                (userID,is_identified,time_identified,valid_till,visit_count)\
@@ -32,6 +33,7 @@ class insert_table_queries:
 
 class query_data:
     ID_FOR_NAME = """ SELECT userID from users where name = '%s' """
+    EMAIL_FOR_ID = """ SELECT email from users where userID = '%s' """
     ALL_FOR_NAME = """ SELECT * from users where name = '%s' """
     ALL_FOR_ID = """ SELECT * from identification_records where userID = %s """
     IS_IDENTIFIED_FOR_ID = """ SELECT is_identified from identification_records where userID = %s """

@@ -28,15 +28,16 @@ def main(n):
         name = f"{user['name']['first']} {user['name']['last']}"
         userImg = image_url_to_blob(user['picture']['large'])
         address = f"{user['location']['street']['number']} {user['location']['street']['name']}, {user['location']['postcode']}"
+        email = user['email']
         city = f"{user['location']['city']}"
         state = f"{user['location']['state']}"
         contact = user['phone']
         country = user['location']['country']
-        threading.Thread(target=populate_users, args=(userImg, name, contact, address, city, state, country)).start()
+        threading.Thread(target=populate_users, args=(userImg, name, contact, email, address, city, state, country)).start()
     # insert_user_data_into_db(users)
     print(f"Inserted {n} users into the database.")
 
 
 if __name__ == "__main__":
-    number_of_users = 100  # Set the number of users to fetch and insert
+    number_of_users = 50  # Set the number of users to fetch and insert
     main(number_of_users)

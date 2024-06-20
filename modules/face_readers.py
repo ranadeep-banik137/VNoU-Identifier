@@ -102,6 +102,8 @@ def recognize_faces(frame, face_locations, reference_encodings, model):
             frame = frame[:, :, ::]
     face_encodings = fr.face_encodings(frame, known_face_locations=face_locations, num_jitters=1)
     for face_encoding in face_encodings:
+        if len(reference_encodings) <= 0:
+            return False, None
         if face_encodings:
             logging.info('Face detected in frame')
             matches = fr.compare_faces(reference_encodings, face_encoding)

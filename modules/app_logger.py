@@ -99,5 +99,8 @@ def get_element(name, element):
         case 'total_visit_count':
             visit_count = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.VISIT_COUNT_FOR_ID % _id))
             return 0 if visit_count is None else visit_count
-        case _:  # Email yet to be inserted
+        case 'email':
+            email = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.EMAIL_FOR_ID % _id))
+            return '' if email is None else email
+        case _:
             return None

@@ -14,7 +14,7 @@ config = read_config()
 def trigger_mail(name, images=[]):
     _id = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name))
     identified_at = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.TIME_IDENTIFIED_FOR_ID % _id))
-    receiver_email = 'ranadeep_banik@yahoo.com'  # Test purpose
+    receiver_email = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.EMAIL_FOR_ID % _id))  # 'ranadeep_banik@yahoo.com' for test purpose
     if receiver_email == '' or receiver_email is None:
         logging.warning(f'No email id in database for {name}. Please update email for the user')
         pass

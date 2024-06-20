@@ -47,9 +47,9 @@ app.post('/register', upload.single('imageUpload'), function (req, res, next) {
                 const yamlData = `${newFileName}:\n` + Object.entries(data)
                     .map(([key, value]) => {
                         if (value !== '') {
-                            return `\t${key}: ${value}`;
+                            return `  ${key}: ${value}`;
                         } else {
-                            return `\t${key}: ''`; // Represent empty values as ''
+                            return `  ${key}: ''`; // Represent empty values as ''
                         }
                     })
                     .join('\n') + '\n\n';
