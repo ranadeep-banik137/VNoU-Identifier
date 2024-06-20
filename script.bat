@@ -16,6 +16,9 @@ echo Starting the application....
 
 :: echo Installing basic pip libraries....
 
+npm cache clean --force
+npm install express multer
+
 start /min cmd /k "python main.py"
 echo Starting Face Identifier....
 
