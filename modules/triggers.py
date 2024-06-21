@@ -41,8 +41,8 @@ def trigger_mail(name, images=[]):
     Regards,
     VNoU Team"""
 
+            logging.info(f'Sending mail to {receiver_email} attaching {len(images)} image/images')
             send_mail(receiver_email=receiver_email, cc_email=cc_email, subject=subject, body=body, images=images)
-            logging.info(f'Sending mail to {receiver_email} with body {body} along with {len(images)} images')
             logging.debug(f'mail sent with body {body}')
     else:
         logging.warning(f'Either mail id not found or domain not valid for user {name}. Skipping mail tigger')
