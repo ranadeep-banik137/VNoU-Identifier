@@ -8,6 +8,31 @@ from modules.config_reader import read_config
 config = read_config()
 
 
+def is_face_stable(frame, face_locations, threshold=10):
+    landmarks = fr.face_landmarks(frame, [face_locations[0]])[0]
+    # Example: Check if eye distances are roughly stable
+    left_eye_dist = np.linalg.norm(np.array(landmarks['left_eye'][0]) - np.array(landmarks['left_eye'][3]))
+    right_eye_dist = np.linalg.norm(np.array(landmarks['right_eye'][0]) - np.array(landmarks['right_eye'][3]))
+    return abs(left_eye_dist - right_eye_dist) < threshold
+
+
+def is_frame_static(frame, threshold=100):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (21, 21), 0)
+
+    if not hasattr(is_frame_static, 'background'):
+        is_frame_static.background = blur.copy().astype("float")
+        return False
+
+    cv2.accumulateWeighted(blur, is_frame_static.background, 0.5)
+    frame_delta = cv2.absdiff(blur, cv2.convertScaleAbs(is_frame_static.background))
+
+    thresh = cv2.threshold(frame_delta, threshold, 255, cv2.THRESH_BINARY)[1]
+    cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    return len(cnts) == 0
+
+
 def calculate_face_angle(left_eye_center, right_eye_center):
     eye_delta = right_eye_center - left_eye_center
     angle = np.arctan2(eye_delta[1], eye_delta[0]) * 180.0 / np.pi
@@ -124,21 +149,20 @@ def recognize_faces(frame, face_locations, reference_encodings, model):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = frame[:, :, ::]
     face_encodings = fr.face_encodings(frame, known_face_locations=face_locations, num_jitters=1)
+    face_match_index_list = []
+    if len(reference_encodings) <= 0:
+        return face_match_index_list
     for face_encoding in face_encodings:
-        if len(reference_encodings) <= 0:
-            return False, None
-        # if face_encodings:
-        # logging.info('Face detected in frame')
         matches = fr.compare_faces(reference_encodings, face_encoding)
         face_distances = fr.face_distance(reference_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
         if matches[best_match_index] and face_distances[best_match_index] < get_face_distance_threshold():
             logging.info('Face detected and recognized in frame')
-            return True, best_match_index
+            face_match_index_list.append((True, best_match_index))
         else:
             logging.info('Face detected but not recognized in frame')
-            return False, None
-    return False, None
+            face_match_index_list.append((False, None))
+    return face_match_index_list
 
 
 def get_face_distance_threshold():

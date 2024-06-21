@@ -49,25 +49,27 @@ def run_face_recognition():
                 if detect_face_angle_for_face(frame):
                     logging.info('The face seems tilted. Retrying for frontal detection')
                     continue
-                match_found, match_index = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
-                if match_found:
-                    name = names[match_index]
-                    logging.info(f"Face identified as: {name}")
-                    log_thread = threading.Thread(target=log_transaction, args=(frame_count, name, face_detect_model,))
-                    speech_thread = threading.Thread(target=play_speech, args=(name,))
-                    mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img(frame)]))
-                    timer_thread = threading.Thread(target=update_timer_for_user_in_background, args=(name,))
-                    speech_thread.start()
-                    mail_thread.start()
-                    speech_thread.join()
-                    mail_thread.join()
-                    event_thread.set()
-                    timer_thread.start()
-                    log_thread.start()
-                    continue
-                else:
-                    if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):
-                        capture_face_img(frame)
+                face_match_index_list = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
+                for (match_found, match_index), face in zip(face_match_index_list, face_locations):
+                    if match_found and not detect_blurry_variance(face):
+                        name = names[match_index]
+                        logging.info(f"Face identified as: {name}")
+                        log_thread = threading.Thread(target=log_transaction,
+                                                      args=(frame_count, name, face_detect_model,))
+                        speech_thread = threading.Thread(target=play_speech, args=(name,))
+                        mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img(frame)]))
+                        timer_thread = threading.Thread(target=update_timer_for_user_in_background, args=(name,))
+                        speech_thread.start()
+                        mail_thread.start()
+                        speech_thread.join()
+                        mail_thread.join()
+                        event_thread.set()
+                        timer_thread.start()
+                        log_thread.start()
+                        continue
+                    else:
+                        if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):
+                            capture_face_img(frame)
             else:
                 logging.info('No face detected')
                 continue
