@@ -37,6 +37,7 @@ face_recognition:
   face-recognition-model: 'VNoU'
   cache-expiry: 120
   frame-max-reset-seconds: 60
+  face-distance-threshold: 'Moderate'
 
 # Directory
 files:

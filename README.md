@@ -18,6 +18,15 @@
 <p align="center"> <img src="https://i.sstatic.net/aS7YF.jpg"/></p>
 
 <h5 align="left">The blured image's edge is smoothed, so the variance is little.</h5>
+
+<h7 align="left">Example Threshold Values for recognizing face (Refer to ['face_recognition']['face-distance-threshold'] in configmap):</h7>
+
+<h9 align="left">1.Strict Threshold: 0.5 or lower. Use this if your application requires very high accuracy and can tolerate higher computational demands.</h9>
+
+<h9 align="left">2. Moderate Threshold: 0.6 to 0.7. This is suitable for many general-purpose face recognition applications where accuracy and performance need to be balanced.</h9>
+
+<h9 align="left">3. Lenient Threshold: 0.8 or higher. Use this if your application prioritizes performance over strict accuracy, or if the consequences of false positives are minimal.</h9>
+
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ranadeep-banik137&label=Profile%20views&color=0e75b6&style=flat" alt="ranadeep-banik137" /> </p>
 
 <p align="left"> <a href="https://github.com/ryo-ma/github-profile-trophy"><img src="https://github-profile-trophy.vercel.app/?username=ranadeep-banik137" alt="ranadeep-banik137" /></a> </p>
