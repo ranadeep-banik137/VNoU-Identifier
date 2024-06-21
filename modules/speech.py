@@ -12,6 +12,7 @@ from constants.db_constansts import query_data
 from modules.config_reader import read_config
 from pydub import AudioSegment
 from pydub.playback import play
+from modules.db_miscellaneous import is_user_already_identified
 
 config = read_config()
 
@@ -22,7 +23,6 @@ def play_speech(input_name=''):
         pass
     else:
         text_val = f'Sorry, I cannot identify your face currently. Please stand in front of the camera for a while' if input_name == 'Unknown Face' else f'Welcome {input_name}. I cannot interact with you but good to see you here. Have a nice day {input_name}'
-        logging.info(f'User identified as {input_name}' if input_name != "Unknown Face" else '')
         # Here are converting in English Language
         language = 'en'
         speech_file_name = input_name.split(' ')[0] + '_' + re.sub("[^\w]", "_",
@@ -66,22 +66,3 @@ def play_speech_without_saving_audio(text=''):
     # print(beng)
     engine.say(text)
     engine.runAndWait()
-
-
-def is_user_already_identified(name):
-    bool_value = True
-    if name == 'Unknown Face' or name == '' or name is None:
-        return bool_value
-    else:
-        _id = fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name)[0][0]
-        check = False
-        try:
-            fetch_table_data_in_tuples('', query_data.ALL_FOR_ID % _id)[0][0]
-            check = True
-        except Exception as err:
-            logging.error(f'ignore {err}')
-        if check:
-            is_valid_for_call = fetch_table_data_in_tuples('', query_data.IS_IDENTIFIED_FOR_ID % _id)[0][0]
-            check = True if str(is_valid_for_call) == '1' else False
-        bool_value = check
-        return bool_value

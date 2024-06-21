@@ -65,6 +65,29 @@ def detect_face_angle_for_face(frame):
     return num_true >= num_false
 
 
+def detect_face_direction(frame, face_locations):
+    # Get face landmarks to determine direction
+    face_landmarks = fr.face_landmarks(frame, [face_locations[0]])[0]
+    # Extract relevant facial landmarks
+    left_eye = face_landmarks['left_eye']
+    right_eye = face_landmarks['right_eye']
+    nose_bridge = face_landmarks['nose_bridge']
+
+    # Calculate face direction based on eye positions relative to nose
+    if left_eye[0][0] < nose_bridge[0][0] < right_eye[0][0]:
+        return "Front"
+    elif left_eye[0][0] < nose_bridge[0][0]:
+        return "Left"
+    elif right_eye[0][0] > nose_bridge[0][0]:
+        return "Right"
+    elif left_eye[0][1] < nose_bridge[0][1]:
+        return "Up"
+    elif left_eye[0][1] > nose_bridge[0][1]:
+        return "Down"
+    else:
+        return "Undetermined"
+
+
 def detect_face_locations(image, model):
     face_locations = None
     match model:
@@ -102,14 +125,30 @@ def recognize_faces(frame, face_locations, reference_encodings, model):
             frame = frame[:, :, ::]
     face_encodings = fr.face_encodings(frame, known_face_locations=face_locations, num_jitters=1)
     for face_encoding in face_encodings:
-        if face_encodings:
-            logging.info('Face detected in frame')
-            matches = fr.compare_faces(reference_encodings, face_encoding)
-            face_distances = fr.face_distance(reference_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            if best_match_index > len(matches):
-                logging.error(f'Error in face image in backend. Please change backend images')
-                return False, None
-            if matches[best_match_index]:
-                return True, best_match_index
+        if len(reference_encodings) <= 0:
+            return False, None
+        # if face_encodings:
+        # logging.info('Face detected in frame')
+        matches = fr.compare_faces(reference_encodings, face_encoding)
+        face_distances = fr.face_distance(reference_encodings, face_encoding)
+        best_match_index = np.argmin(face_distances)
+        if matches[best_match_index] and face_distances[best_match_index] < get_face_distance_threshold():
+            logging.info('Face detected and recognized in frame')
+            return True, best_match_index
+        else:
+            logging.info('Face detected but not recognized in frame')
+            return False, None
     return False, None
+
+
+def get_face_distance_threshold():
+    threshold_val = str(config['face_recognition']['face-distance-threshold'])
+    match threshold_val.upper():
+        case 'MODERATE':
+            return 0.6
+        case 'LENIENT':
+            return 0.8
+        case 'STRICT':
+            return 0.5
+        case _:
+            return 0.7

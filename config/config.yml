@@ -6,6 +6,14 @@ database:
   password: 'rana#123'
   db: 'profiles'
 
+mail:
+  host: 'smtp.gmail.com'
+  port: 587
+  id: 'vnou.solutions@gmail.com'
+  password: 'vuyy bnte xxbq ujku'
+  mail-password: 'VNoU#123'
+  delete-local-image: True
+
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'
   log-level: 'INFO'
@@ -29,6 +37,7 @@ face_recognition:
   face-recognition-model: 'VNoU'
   cache-expiry: 120
   frame-max-reset-seconds: 60
+  face-distance-threshold: 'Moderate'
 
 # Directory
 files:

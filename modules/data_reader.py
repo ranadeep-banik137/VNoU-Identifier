@@ -47,6 +47,10 @@ def get_file_names(folder_path=f'{os.getenv("PROJECT_PATH") or ""}img'):
     return [file_name for file_name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file_name))]
 
 
+def get_file_names_excluding_file(folder_path=f'{os.getenv("PROJECT_PATH") or ""}img', exclude_file_name=''):
+    return [file_name for file_name in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file_name)) and file_name != exclude_file_name]
+
+
 def is_img_file(file_path):
     flag = False
     if os.path.basename(file_path) in ['.jpg', '.jpeg', '.png', '.img']:
@@ -76,6 +80,10 @@ def get_missing_items_from_tuple_list(main_list, latest_list):
         if item not in main_set:
             missing_items.append(item)
     return missing_items
+
+
+def fetch_first_element_in_tuple(tuple_data):
+    return tuple_data[0][0] if tuple_data else None
 
 
 def make_dir_if_not_exist(file_path):

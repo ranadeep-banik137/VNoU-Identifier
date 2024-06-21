@@ -15,7 +15,7 @@ def create_pool():
         "database": os.getenv('DB_NAME') or db_config['db']
     }
     pool = pooling.MySQLConnectionPool(pool_name="mypool",
-                                       pool_size=5,
+                                       pool_size=32,
                                        pool_reset_session=True,
                                        **dbconfig)
     return pool
@@ -64,14 +64,14 @@ def create_table(creation_query):
         pass
 
 
-def populate_users(file, name, contact='', address='', city='', state='', country='India'):
+def populate_users(file, name, contact='', email='', address='', city='', state='', country='India'):
     try:
         # Read database configuration
         conn, cursor = create_connection()
         try:
             create_table(create_table_queries.USERS)
             # Execute the INSERT statement
-            query = insert_table_queries.USERS, (name, file, contact, address, city, state, country)
+            query = insert_table_queries.USERS, (name, file, contact, email, address, city, state, country)
             logging.debug(f'Query inserted: {query}')
             cursor.execute(query)
             # Commit the changes to the database
@@ -80,7 +80,7 @@ def populate_users(file, name, contact='', address='', city='', state='', countr
             logging.error("Error while inserting data in users table. Retrying...")
             logging.debug(f'DB error while inserting data {error}')
             try:
-                cursor.execute(insert_table_queries.USERS_IF_FAILED, (name, file, contact, address, city, state, country))
+                cursor.execute(insert_table_queries.USERS_IF_FAILED, (name, file, contact, email, address, city, state, country))
                 # Commit the changes to the database
                 logging.info(f'Inserted data for user {name}')
                 conn.commit()

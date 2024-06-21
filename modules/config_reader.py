@@ -16,7 +16,7 @@ def read_config(config_path='config/config.yml'):
 
 
 # Write the dictionary to a YAML file
-def update_config(config_data=''):
+def update_config(config_path='config/config.yml', config_data=''):
     # Example of setting a config_data
     # config_data = {
     #    'database': {
@@ -27,9 +27,15 @@ def update_config(config_data=''):
     #    }
     # }
     try:
-        with open('config.yml', 'w') as file:
+        with open(config_path, 'w') as file:
             yaml.dump(config_data, file)
     except FileNotFoundError as err:
         logging.error(f'Config file not found {err}')
     except Exception as e:
         logging.error(f'Config file update failed {e}')
+
+
+def clear_yaml_file(config_path='config/config.yml'):
+    # Open the YAML file in write mode and truncate its content
+    with open(config_path, 'w') as f:
+        f.truncate(0)

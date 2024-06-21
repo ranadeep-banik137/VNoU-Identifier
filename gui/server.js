@@ -14,9 +14,14 @@ app.get('/', function(req, res) {
 app.post('/register', upload.single('imageUpload'), function (req, res, next) {
     const firstName = req.body.firstName;
     const lastName = req.body.lastName;
+    const middleName = req.body.middleName || '';
+    const email = req.body.email || '';
+    const phone = req.body.phone || '';
     const imagePath = req.file.path;
     const originalExtension = path.extname(req.file.originalname);
-    const newPath = `D:/Projects/VNoU-Identifier/gui/uploads/${firstName}-${lastName}-001${originalExtension}`;
+    const randomNum = Math.floor(Math.random() * 1000);
+    const newFileName = `VNoU-${randomNum}`;
+    const newFile = `gui/uploads/${newFileName}${originalExtension}`;
 
     // Function to rename the file with retry logic
     const renameFile = (oldPath, newPath, retries = 5) => {
@@ -31,7 +36,31 @@ app.post('/register', upload.single('imageUpload'), function (req, res, next) {
                 }
             } else {
                 console.log('File Renamed!');
-                res.send('File uploaded and moved!');
+                const data = {
+                    'first_name': firstName,
+                    'last_Name': lastName,
+                    'middle_Name': middleName || '',
+                    'email': email || '',
+                    'phone': phone || ''
+                };
+                const textFilePath = `gui/uploads/details.yml`;
+                const yamlData = `${newFileName}:\n` + Object.entries(data)
+                    .map(([key, value]) => {
+                        if (value !== '') {
+                            return `  ${key}: ${value}`;
+                        } else {
+                            return `  ${key}: ''`; // Represent empty values as ''
+                        }
+                    })
+                    .join('\n') + '\n\n';
+
+                fs.appendFile(textFilePath, yamlData, function(err) {
+                    if (err) {
+                        return next(err); // Pass error to Express error handler
+                    }
+                    console.log('Text file updated:', textFilePath);
+                    res.send('File uploaded, moved, and data saved!');
+                });
             }
         });
     };
@@ -52,7 +81,7 @@ app.post('/register', upload.single('imageUpload'), function (req, res, next) {
     };
 
     // Wait for the file to be ready and then rename it
-    waitForFile(imagePath, () => renameFile(imagePath, newPath));
+    waitForFile(imagePath, () => renameFile(imagePath, newFile));
 });
 
 app.listen(1100, function () {
