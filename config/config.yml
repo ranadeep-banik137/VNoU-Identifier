@@ -12,7 +12,7 @@ mail:
   id: 'vnou.solutions@gmail.com'
   password: 'kvpg xjcp jnbt zdxc'
   mail-password: 'VNoU#123'
-  delete-local-image: True
+  save-image-to-local: True
 
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'

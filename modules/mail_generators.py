@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from modules.config_reader import read_config
-from modules.data_reader import remove_file
+from modules.data_reader import remove_file, save_encoded_image_data
 
 config = read_config()
 
@@ -38,7 +38,7 @@ def send_mail(receiver_email, cc_email='', subject='', body='', images=[]):
     if cc_email != '':
         message["Cc"] = cc_email  # Add CC recipient
     message["Subject"] = 'Default Test Mail <VNoU-Solutions>' if subject.strip() == '' else subject
-    message = set_message_for_mail(message, body, images)
+    message = set_message_for_mail_with_binary_images(message, body, images)
     # Establish a secure session with the SMTP server
     try:
         server = connect_server()
@@ -53,14 +53,14 @@ def send_mail(receiver_email, cc_email='', subject='', body='', images=[]):
         logging.error(f'Error sending mail to {receiver_email} {e}')
     finally:
         server.quit()
-        if mail_sent and str(config['mail']['delete-local-image']) == 'True':
-            for image_file in images:
-                remove_file(image_file)
-                logging.debug(f'Pictures removed from local after sending mail to {receiver_email}')
+        if not mail_sent and str(config['mail']['save-image-to-local']) == 'True':
+            for image_data, image_name in images:
+                save_encoded_image_data(image_data, f'captured/{image_name}')
+                logging.info(f'Pictures saved to local as sending mail to {receiver_email} has failed')
         return mail_sent
 
 
-def set_message_for_mail(message, body, image_files=[]):
+def set_message_for_mail_with_image_files(message, body, image_files=[]):
     # Add body to email
     body = "This email contains images" if body.strip() == '' else body
     message.attach(MIMEText(body, "plain"))
@@ -73,4 +73,16 @@ def set_message_for_mail(message, body, image_files=[]):
                 message.attach(part)
         except FileNotFoundError:
             print(f"Attachment file {image_file} not found")
+    return message
+
+
+def set_message_for_mail_with_binary_images(message, body, image_data_list=[]):
+    # Add body to email
+    body = "This email contains images" if body.strip() == '' else body
+    message.attach(MIMEText(body, "plain"))
+
+    # Attach images to the email
+    for image_data, image_name in image_data_list:
+        part = MIMEImage(image_data, name=image_name)
+        message.attach(part)
     return message

@@ -4,6 +4,7 @@ import time
 import logging
 import os
 import numpy as np
+import face_recognition as fr
 from datetime import datetime
 from DeepImageSearch import Load_Data
 from modules.config_reader import read_config
@@ -18,6 +19,23 @@ def capture_face_img(frame, filepath=config['files']['save-unknown-image-filepat
     cv2.imwrite(f"{filepath}VNoU_{file_name}.jpg", frame)
     logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
     return write_file_name
+
+
+def capture_face_img_with_face_marked(frame, name, face_locations):
+    for face_location in face_locations:
+        top, right, bottom, left = face_location
+
+        # Draw rectangle around the face
+        cv2.rectangle(frame, (left, top), (right, bottom), (0, 155, 255), 2)
+        landmarks = fr.face_landmarks(frame, [face_location])
+        # for facial_feature in landmarks[0].keys():
+        #    for point in landmarks[0][facial_feature]:
+        #        cv2.circle(frame, point, 0.5, (0, 155, 255), 0.5)  # Green circles for facial landmarks
+        cv2.putText(frame, name, (left, bottom + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 155, 255), 2)
+    _, buffer = cv2.imencode('.jpg', frame)
+    image_data = buffer.tobytes()
+    return image_data, f"VNoU_{name}.jpg"
+    # capture_face_img(frame)
 
 
 def delete_similar_images(filepath):

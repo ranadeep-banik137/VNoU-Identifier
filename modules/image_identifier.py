@@ -10,7 +10,7 @@ from modules.config_reader import read_config
 from modules.app_logger import log_transaction
 from modules.triggers import trigger_mail
 from modules.db_miscellaneous import update_timer_for_user_in_background, update_valid_till_for_expired
-from modules.file_handler import capture_face_img, delete_similar_images
+from modules.file_handler import capture_face_img, delete_similar_images, capture_face_img_with_face_marked
 
 config = read_config()
 event_thread = threading.Event()
@@ -57,7 +57,7 @@ def run_face_recognition():
                         log_thread = threading.Thread(target=log_transaction,
                                                       args=(frame_count, name, face_detect_model,))
                         speech_thread = threading.Thread(target=play_speech, args=(name,))
-                        mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img(frame)]))
+                        mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img_with_face_marked(frame, name, face_locations)]))
                         timer_thread = threading.Thread(target=update_timer_for_user_in_background, args=(name,))
                         speech_thread.start()
                         mail_thread.start()
