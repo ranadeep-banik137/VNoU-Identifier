@@ -2,6 +2,8 @@ import smtplib
 import ssl
 import os
 import logging
+import time
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -30,7 +32,8 @@ def connect_server():
     return server
 
 
-def send_mail(receiver_email, cc_email='', subject='', body='', images=[]):
+def send_mail(receiver_email, cc_email='', bcc_email='', subject='', body='', images=[]):
+    mail_sent_at = None
     # Create a multipart message and set headers
     message = MIMEMultipart()
     message["From"] = config['mail']['id']
@@ -44,6 +47,7 @@ def send_mail(receiver_email, cc_email='', subject='', body='', images=[]):
         server = connect_server()
         server.sendmail(config['mail']['id'], receiver_email, message.as_string())
         logging.info(f'mail sent to {receiver_email} successfully')
+        mail_sent_at = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
         mail_sent = True
     except smtplib.SMTPException as e:
         mail_sent = False
@@ -55,9 +59,9 @@ def send_mail(receiver_email, cc_email='', subject='', body='', images=[]):
         server.quit()
         if not mail_sent and str(config['mail']['save-image-to-local']) == 'True':
             for image_data, image_name in images:
-                save_encoded_image_data(image_data, f'captured/{image_name}')
+                save_encoded_image_data(image_data, f'{config["files"]["save-unknown-image-filepath"]}{image_name}')
                 logging.info(f'Pictures saved to local as sending mail to {receiver_email} has failed')
-        return mail_sent
+        return mail_sent, mail_sent_at
 
 
 def set_message_for_mail_with_image_files(message, body, image_files=[]):

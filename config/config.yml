@@ -13,6 +13,7 @@ mail:
   password: 'kvpg xjcp jnbt zdxc'
   mail-password: 'VNoU#123'
   save-image-to-local: True
+  log-file-dir: 'logs/VNoU-email-logs.log'
 
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'

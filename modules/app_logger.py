@@ -104,3 +104,37 @@ def get_element(name, element):
             return '' if email is None else email
         case _:
             return None
+
+
+def log_notification(name, images, email_sent, cc_email, bcc_email, subject, mail_sent_at, filename=config['mail']['log-file-dir']):
+    notifications = {
+        "id": get_element(name, 'user_id'),
+        "name": name,
+        "email_mode": 'SMTP',
+        "email_sent": email_sent,
+        "email_id": get_element(name, 'email'),
+        "email_from": str(config['mail']['id']),
+        "cc": cc_email,
+        "bcc": bcc_email,
+        "subject": subject,
+        "attachments": set_attachments_in_log(images),
+        "email_sent_at": mail_sent_at
+    }
+    json_str = json.dumps(notifications, separators=(',', ':'))
+
+    make_dir_if_not_exist(filename)
+    # Append JSON string to the specified text file
+    with open(filename, 'a') as file:
+        file.write(json_str + '\n')
+
+
+def set_attachments_in_log(images):
+    image_list = []
+    save_img_to_local = config['mail']['save-image-to-local']
+    for image_data, image_name in images:
+        image = {"image_saved_to_local": 'True' if save_img_to_local else 'False'}
+        if save_img_to_local:
+            image["image_link"] = f'{config["files"]["save-unknown-image-filepath"]}{image_name}'
+            image["image_title"] = image_name
+        image_list.append(image)
+    return image_list

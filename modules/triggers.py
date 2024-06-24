@@ -7,6 +7,7 @@ from modules.mail_generators import send_mail
 from modules.config_reader import read_config
 from modules.db_miscellaneous import is_user_already_identified
 from modules.data_reader import fetch_first_element_in_tuple
+from modules.app_logger import log_notification
 
 config = read_config()
 
@@ -17,6 +18,7 @@ def trigger_mail(name, images=[]):
     receiver_email = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.EMAIL_FOR_ID % _id))  # 'ranadeep_banik@yahoo.com' for test purpose
     if 'example.com' not in receiver_email and receiver_email != '' and receiver_email is not None:
         cc_email = ''
+        bcc_email = ''
         if _id <= 0:
             pass
         if not is_user_already_identified(name):
@@ -42,7 +44,8 @@ def trigger_mail(name, images=[]):
     VNoU Team"""
 
             logging.info(f'Sending mail to {receiver_email} attaching {len(images)} image/images')
-            send_mail(receiver_email=receiver_email, cc_email=cc_email, subject=subject, body=body, images=images)
+            mail_sent, mail_time = send_mail(receiver_email=receiver_email, cc_email=cc_email, bcc_email=bcc_email, subject=subject, body=body, images=images)
+            log_notification(name=name, images=images, email_sent=mail_sent, cc_email=cc_email, bcc_email=bcc_email, subject=subject, mail_sent_at=mail_time)
             logging.debug(f'mail sent with body {body}')
     else:
         logging.warning(f'Either mail id not found or domain not valid for user {name}. Skipping mail tigger')
