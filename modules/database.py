@@ -7,7 +7,7 @@ from constants.db_constansts import insert_table_queries, create_table_queries, 
 
 def create_pool():
     conf = read_config()
-    db_config = conf['database']
+    db_config = conf['local_database'] if str(conf['exec_mode']) == 'local' else conf['database']
     dbconfig = {
         "host": os.getenv('DB_HOST') or db_config['host'],
         "user": os.getenv('DB_USER') or db_config['user'],

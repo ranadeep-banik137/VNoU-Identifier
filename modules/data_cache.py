@@ -46,8 +46,6 @@ def process_db_data():
             reference_encodings, names = process_encoding(missing_elements, 'Encoding missing data files to cache')
         cache_last_updated = time.time()
 
-    return reference_encodings, names
-
 
 def process_encoding(rows, desc='Encoding backend files'):
     logging.info(f'Backing up all files from backend/ Maintenance in progress..')
@@ -66,4 +64,8 @@ def process_encoding(rows, desc='Encoding backend files'):
             if not os.getenv('SAVE_DB_DATA_TO_LOCAL', config['app_default']['save-db-data-to-local']):
                 remove_file(image_path)
             pbar.update(1)
+    return reference_encodings, names
+
+
+def get_cache():
     return reference_encodings, names

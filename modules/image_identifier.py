@@ -3,9 +3,10 @@ import cv2
 import os
 import time
 import logging
+from modules.data_transfer import transfer_data_to_database
 from modules.face_readers import detect_face_angle_for_face, detect_blurry_variance, recognize_faces, detect_face_locations
 from modules.speech import play_speech
-from modules.data_cache import process_db_data
+from modules.data_cache import process_db_data, get_cache
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction
 from modules.triggers import trigger_mail
@@ -14,9 +15,13 @@ from modules.file_handler import capture_face_img, delete_similar_images, captur
 
 config = read_config()
 event_thread = threading.Event()
+reference_encodings = []
+names = []
 
 
 def run_face_recognition():
+    global reference_encodings
+    global names
     face_config = config['face_recognition']
     input_video_src = str(os.getenv('CAMERA_INDEX', face_config['camera-index']))
     cap = cv2.VideoCapture(input_video_src if not input_video_src.isdigit() else int(input_video_src))
@@ -30,7 +35,9 @@ def run_face_recognition():
     frame_count = 0
     frame_fail_count = 0
     while True:
-        reference_encodings, names = process_db_data()
+        threading.Thread(target=transfer_data_to_database).start()
+        threading.Thread(target=process_db_data())
+        reference_encodings, names = get_cache()
         update_valid_till_for_expired()
         ret, frame = cap.read()
         frame_count += 1
@@ -59,6 +66,7 @@ def run_face_recognition():
                         speech_thread = threading.Thread(target=play_speech, args=(name,))
                         mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img_with_face_marked(frame, name, face_locations)]))
                         timer_thread = threading.Thread(target=update_timer_for_user_in_background, args=(name,))
+                        transfer_thread = threading.Thread(target=transfer_data_to_database)
                         speech_thread.start()
                         mail_thread.start()
                         speech_thread.join()
@@ -66,6 +74,7 @@ def run_face_recognition():
                         event_thread.set()
                         timer_thread.start()
                         log_thread.start()
+                        transfer_thread.start()
                         continue
                     else:
                         if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):

@@ -1,6 +1,17 @@
+# Execution mode: options are 1. local 2. AWS-RDS
+exec_mode: 'local'
+
 # MySQL credentials (Confidential file)
-database:
+local_database:
   host: 'localhost'
+  port: '3306'
+  user: 'ranadeep'
+  password: 'rana#123'
+  db: 'profiles'
+
+# AWS-RDS credentials (Confidential file)
+database:
+  host: 'vnou-solutions.cj2amuwswmdg.ap-south-1.rds.amazonaws.com'
   port: '3306'
   user: 'ranadeep'
   password: 'rana#123'
@@ -30,7 +41,7 @@ app_default:
 # Accuracy depends mainly on Camera & frame visibility
 face_recognition:
   camera-index: 0
-  frame-rate-range: 5
+  frame-rate-range: 2
   capture-unknown-face: False
   voice-command-expiry: 3600
   delete-img-similarity-percentage: 90

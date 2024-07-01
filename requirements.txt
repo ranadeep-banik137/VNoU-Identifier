@@ -22,3 +22,4 @@ tensorflow
 requests~=2.31.0
 tqdm~=4.66.4
 imutils~=0.5.4
+SQLAlchemy~=2.0.31
