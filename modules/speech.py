@@ -12,7 +12,6 @@ from constants.db_constansts import query_data
 from modules.config_reader import read_config
 from pydub import AudioSegment
 from pydub.playback import play
-from modules.db_miscellaneous import is_user_already_identified
 
 config = read_config()
 
@@ -34,26 +33,25 @@ def play_speech(input_name=''):
         # the module that the transformed audio should
         # have a high speed
         # obj = gTTS(text=text_val, lang=language, slow=False)
+        logging.info(f'Playing audio for {input_name}' if input_name != "Unknown Face" else '')
 
-        if not is_user_already_identified(input_name):
-            logging.info(f'Playing audio for {input_name}' if input_name != "Unknown Face" else '')
-
-            # Here we are saving the transformed audio in a mp3 file
-            # obj.save(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
-            # logging.debug(f'file saved as {speech_file_name}.mp3')
-            try:
-                play_speech_without_saving_audio(text_val)
-                # Play the exam.mp3 file
-                # playsound(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
-                # audio = AudioSegment.from_file(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
-                # play(audio)
-                logging.debug(f'Playing : {text_val}')
-            except Exception as err:
-                logging.error(err)
-            finally:
-                # os.remove(f'{os.getenv("PROJECT_PATH") or ""}data/{speech_file_name}.mp3')
-                # logging.debug(f'Removed {speech_file_name}.mp3')
-                return True if input_name != 'Unknown Face' else False
+        # Here we are saving the transformed audio in a mp3 file
+        # obj.save(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
+        # logging.debug(f'file saved as {speech_file_name}.mp3')
+        try:
+            play_speech_without_saving_audio(text_val)
+            # Play the exam.mp3 file
+            # playsound(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
+            # audio = AudioSegment.from_file(f"{os.getenv('PROJECT_PATH') or ''}data/{speech_file_name}.mp3")
+            # play(audio)
+            logging.debug(f'Playing : {text_val}')
+        except Exception as err:
+            logging.error(err)
+        finally:
+            # os.remove(f'{os.getenv("PROJECT_PATH") or ""}data/{speech_file_name}.mp3')
+            # logging.debug(f'Removed {speech_file_name}.mp3')
+            return True if input_name != 'Unknown Face' else False
+        # if not is_user_already_identified(input_name):
 
 
 def play_speech_without_saving_audio(text=''):

@@ -46,7 +46,7 @@ def set_log_handler(formatter=logging.Formatter(config['app_default']['log-forma
     logger.addHandler(stream_handler)
 
 
-def log_transaction(frame_number, name, model, filename=config['app_default']['log-file-dir']):
+def log_transaction(frame_number, name, model, is_identified, filename=config['app_default']['log-file-dir']):
     """
     Log a transaction as a JSON object in a text file.
 
@@ -66,14 +66,16 @@ def log_transaction(frame_number, name, model, filename=config['app_default']['l
     current_time = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
     data = {
         "timestamp": serialize_datetime(current_time),
-        "frame-number": frame_number,
+        "frame_number": frame_number,
         "user_id": get_element(name, 'user_id'),
         "name": name,
         "contact": get_element(name, 'contact'),
         "email": get_element(name, 'email'),
         "detected_at": serialize_datetime(current_time if get_element(name, 'detected_at') == '' else get_element(name, 'detected_at')),
         "total_visit_count": get_element(name, 'total_visit_count'),
-        "model": model
+        "model": model,
+        "is_repeated_user": is_identified,
+        "is_greeted": not is_identified
     }
 
     # Convert to JSON string

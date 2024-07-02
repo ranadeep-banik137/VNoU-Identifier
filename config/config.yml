@@ -1,5 +1,5 @@
 # Execution mode: options are 1. local 2. AWS-RDS
-exec_mode: 'local'
+exec_mode: 'AWS'
 
 # MySQL credentials (Confidential file)
 local_database:

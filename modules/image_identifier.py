@@ -10,7 +10,7 @@ from modules.data_cache import process_db_data, get_cache
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction
 from modules.triggers import trigger_mail
-from modules.db_miscellaneous import update_timer_for_user_in_background, update_valid_till_for_expired
+from modules.db_miscellaneous import update_timer_for_user_in_background, update_valid_till_for_expired, is_user_already_identified
 from modules.file_handler import capture_face_img, delete_similar_images, capture_face_img_with_face_marked
 
 config = read_config()
@@ -34,11 +34,20 @@ def run_face_recognition():
     logging.info(f'Frames will be skipped every {process_every_n_frames} seconds')
     frame_count = 0
     frame_fail_count = 0
+    process_db_data()
     while True:
-        threading.Thread(target=transfer_data_to_database).start()
-        threading.Thread(target=process_db_data())
+        test_time = get_test_time()
+        transfer_data_to_database()
+        transfer_thread = threading.Thread(target=transfer_data_to_database)
+        transfer_thread.start()
+        transfer_thread.join()
+        logging.info(f'It took {(test_time - get_test_time())} seconds on first thread to transfer data to DB')
+        threading.Thread(target=process_db_data()).start()
+        logging.info(f'It took {(test_time - get_test_time())} seconds on second thread to process data from DB')
         reference_encodings, names = get_cache()
-        update_valid_till_for_expired()
+        logging.info(f'It took {(test_time - get_test_time())} seconds to process data from cache')
+        threading.Thread(target=update_valid_till_for_expired).start()
+        logging.info(f'It took {(test_time - get_test_time())} seconds update DB on valid till expired')
         ret, frame = cap.read()
         frame_count += 1
         if frame_count % process_every_n_frames != 0:
@@ -49,32 +58,40 @@ def run_face_recognition():
         if ret:
             face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', face_config['face-recognition-model'])
             face_locations = detect_face_locations(frame, face_detect_model)
+            logging.debug(f'It took {(test_time - get_test_time())} seconds to detect model')
             if len(face_locations) > 0:
                 if detect_blurry_variance(frame):
                     logging.info('The frame is blurred. Retrying with next frame')
+                    logging.debug(f'It took {(test_time - get_test_time())} seconds to detect blurriness')
                     continue
                 if detect_face_angle_for_face(frame):
                     logging.info('The face seems tilted. Retrying for frontal detection')
+                    logging.debug(f'It took {(test_time - get_test_time())} seconds to detect angle of face')
                     continue
                 face_match_index_list = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
+                logging.debug(f'It took {(test_time - get_test_time())} seconds to match faces')
                 for (match_found, match_index), face in zip(face_match_index_list, face_locations):
                     if match_found and not detect_blurry_variance(face):
                         name = names[match_index]
                         logging.info(f"Face identified as: {name}")
-                        log_thread = threading.Thread(target=log_transaction,
-                                                      args=(frame_count, name, face_detect_model,))
-                        speech_thread = threading.Thread(target=play_speech, args=(name,))
-                        mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img_with_face_marked(frame, name, face_locations)]))
+                        is_identified = is_user_already_identified(name)
+                        if not is_identified:
+                            speech_thread = threading.Thread(target=play_speech, args=(name,))
+                            mail_thread = threading.Thread(target=trigger_mail, args=(name, [capture_face_img_with_face_marked(frame, name, face_locations)]))
+                            speech_thread.start()
+                            logging.debug(f'It took {(test_time - get_test_time())} seconds after starting speech thread')
+                            mail_thread.start()
+                            logging.debug(f'It took {(test_time - get_test_time())} seconds after starting mail thread')
+                            speech_thread.join()
+                            mail_thread.join()
                         timer_thread = threading.Thread(target=update_timer_for_user_in_background, args=(name,))
-                        transfer_thread = threading.Thread(target=transfer_data_to_database)
-                        speech_thread.start()
-                        mail_thread.start()
-                        speech_thread.join()
-                        mail_thread.join()
+                        log_thread = threading.Thread(target=log_transaction,
+                                                      args=(frame_count, name, face_detect_model, is_identified,))
+                        logging.debug(f'It took {(test_time - get_test_time())} seconds after completing both threads')
                         event_thread.set()
                         timer_thread.start()
                         log_thread.start()
-                        transfer_thread.start()
+                        logging.debug(f'It took {(test_time - get_test_time())} seconds after completing all threads')
                         continue
                     else:
                         if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):
@@ -93,5 +110,9 @@ def run_face_recognition():
                 break
             logging.warning('Frame not loaded correctly. Loading next frame..')
             continue
-    threading.Thread(target=delete_similar_images, args=(config['files']['save-unknown-image-filepath'],)).start()
+        threading.Thread(target=delete_similar_images, args=(config['files']['save-unknown-image-filepath'],)).start()
     cap.release()
+
+
+def get_test_time():
+    return int(time.time())
