@@ -17,6 +17,9 @@ def initiate_data_tables():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    initiate_data_tables()
-    set_log_handler()
-    run_app()
+    try:
+        initiate_data_tables()
+        set_log_handler()
+        run_app()
+    except KeyboardInterrupt:
+        print('TODO')
