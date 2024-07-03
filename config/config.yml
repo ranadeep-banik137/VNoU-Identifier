@@ -63,3 +63,9 @@ files:
 face_config:
   img-blur-threshold-percentage: 20
   img-tilt-threshold-angle: 10
+
+# Reporting types are 1. CSV 2. TEXT 3. HTML
+# If you select all, it means it will create all the above types of report
+reporting:
+  path: 'reports'
+  type: 'all'

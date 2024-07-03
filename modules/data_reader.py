@@ -100,6 +100,9 @@ def fetch_first_element_in_tuple(tuple_data):
 
 
 def make_dir_if_not_exist(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory) and directory != '':
+        os.makedirs(directory)
     if not os.path.exists(file_path):
         with open(file_path, mode='w', newline='') as file:
             logging.debug(f'File at {file_path} created')

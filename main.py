@@ -4,7 +4,7 @@ from modules.face_identifier import run_face_recognition
 from modules.database import create_table, update_table
 from modules.app_logger import set_log_handler
 from constants.db_constansts import create_table_queries, update_data
-from modules.reporting_util import generate_csv_report, generate_html_report, generate_text_report
+from modules.reporting_util import generate_reports
 
 
 def run_app():
@@ -26,6 +26,4 @@ if __name__ == '__main__':
         set_log_handler()
         run_app()
     except KeyboardInterrupt:
-        generate_csv_report(start_time)
-        generate_html_report(start_time)
-        generate_text_report(start_time)
+        generate_reports(start_time=start_time)

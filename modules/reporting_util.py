@@ -3,11 +3,13 @@ import logging
 import time
 from datetime import datetime
 from modules.data_cache import get_reporting_cache, get_identification_cache, get_total_app_frames
-from modules.data_reader import get_tuple_index_from_list_matching_column
+from modules.data_reader import get_tuple_index_from_list_matching_column, make_dir_if_not_exist
 from modules.date_time_converter import convert_epoch_to_timestamp
+from modules.config_reader import read_config
 
 # Example structure for user data
 # users_data = {}
+config = read_config()
 
 
 def merge_users_data():
@@ -45,8 +47,9 @@ def generate_csv_report(start_time):
     end_time = time.time()
     users_data = merge_users_data()
     total_users = len(users_data)
-
-    with open('report.csv', mode='w', newline='') as file:
+    reporting_path = f"{config['reporting']['path']}/report.csv"
+    make_dir_if_not_exist(reporting_path)
+    with open(reporting_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['User Identification Report'])
         writer.writerow(['Total Users Identified', total_users])
@@ -86,9 +89,10 @@ def generate_text_report(start_time):
         report_lines.append(f"Last Emailed: {data['last_email_sent_at']}")
 
     report_content = "\n".join(report_lines)
-
+    reporting_path = f"{config['reporting']['path']}/report.txt"
+    make_dir_if_not_exist(reporting_path)
     # Save report to a file
-    with open('report.txt', 'w') as f:
+    with open(reporting_path, 'w') as f:
         f.write(report_content)
 
     # Print report
@@ -120,9 +124,26 @@ def generate_html_report(start_time):
     report_lines.append("</html>")
 
     report_content = "\n".join(report_lines)
-
+    reporting_path = f"{config['reporting']['path']}/report.html"
+    make_dir_if_not_exist(reporting_path)
     # Save report to a file
-    with open('report.html', 'w') as f:
+    with open(reporting_path, 'w') as f:
         f.write(report_content)
 
     logging.info("Report generated: report.html")
+
+
+create_report = {
+    'csv': generate_csv_report,
+    'html': generate_html_report,
+    'text': generate_text_report
+}
+
+
+def generate_reports(report_type=config['reporting']['type'], start_time=time.time()):
+    if report_type not in ['csv', 'html', 'text']:
+        generate_csv_report(start_time)
+        generate_html_report(start_time)
+        generate_text_report(start_time)
+    else:
+        create_report[report_type](start_time)
