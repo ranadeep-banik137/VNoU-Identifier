@@ -6,7 +6,9 @@ from datetime import datetime
 from modules.config_reader import read_config
 from modules.database import fetch_table_data_in_tuples
 from constants.db_constansts import query_data
-from modules.data_reader import make_dir_if_not_exist, fetch_first_element_in_tuple
+from modules.data_reader import make_dir_if_not_exist, get_tuple_index_from_list_matching_column
+from modules.data_cache import get_identification_cache
+from modules.date_time_converter import convert_epoch_to_timestamp
 
 config = read_config()
 
@@ -46,7 +48,7 @@ def set_log_handler(formatter=logging.Formatter(config['app_default']['log-forma
     logger.addHandler(stream_handler)
 
 
-def log_transaction(frame_number, name, model, is_identified, filename=config['app_default']['log-file-dir']):
+def log_transaction(frame_number, user_id, name, model, is_eligible_for_announcement, filename=config['app_default']['log-file-dir']):
     """
     Log a transaction as a JSON object in a text file.
 
@@ -64,18 +66,21 @@ def log_transaction(frame_number, name, model, is_identified, filename=config['a
     """
     # Create JSON object
     current_time = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
+    user_data = fetch_table_data_in_tuples('', query_data.ALL_USER_DETAILS_FOR_ID % user_id)[0]
+    user_identification_data = get_identification_cache()
+    match_index = get_tuple_index_from_list_matching_column(tuple_list=user_identification_data, column_val=user_id, column_index=0)
     data = {
         "timestamp": serialize_datetime(current_time),
         "frame_number": frame_number,
-        "user_id": get_element(name, 'user_id'),
+        "user_id": user_id,
         "name": name,
-        "contact": get_element(name, 'contact'),
-        "email": get_element(name, 'email'),
-        "detected_at": serialize_datetime(current_time if get_element(name, 'detected_at') == '' else get_element(name, 'detected_at')),
-        "total_visit_count": get_element(name, 'total_visit_count'),
+        "contact": user_data[3],
+        "email": user_data[4],
+        "detected_at": serialize_datetime(convert_epoch_to_timestamp(user_identification_data[match_index][1])),
+        "total_visit_count": user_identification_data[match_index][3],
         "model": model,
-        "is_repeated_user": is_identified,
-        "is_greeted": not is_identified
+        "is_repeated_user": not is_eligible_for_announcement,
+        "is_greeted": is_eligible_for_announcement
     }
 
     # Convert to JSON string
@@ -87,34 +92,13 @@ def log_transaction(frame_number, name, model, is_identified, filename=config['a
         file.write(json_str + '\n')
 
 
-def get_element(name, element):
-    _id = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name))
-    match element:
-        case 'user_id':
-            return 0 if _id is None else _id
-        case 'contact':
-            contact = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.CONTACT_FOR_ID % _id))
-            return '' if contact is None else contact
-        case 'detected_at':
-            detected_at = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.TIME_IDENTIFIED_FOR_ID % _id))
-            return '' if detected_at is None else detected_at
-        case 'total_visit_count':
-            visit_count = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.VISIT_COUNT_FOR_ID % _id))
-            return 0 if visit_count is None else visit_count
-        case 'email':
-            email = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.EMAIL_FOR_ID % _id))
-            return '' if email is None else email
-        case _:
-            return None
-
-
-def log_notification(name, images, email_sent, cc_email, bcc_email, subject, mail_sent_at, filename=config['mail']['log-file-dir']):
+def log_notification(user_id, name, images, email, email_sent, cc_email, bcc_email, subject, mail_sent_at, filename=config['mail']['log-file-dir']):
     notifications = {
-        "id": get_element(name, 'user_id'),
+        "id": user_id,
         "name": name,
         "email_mode": 'SMTP',
         "email_sent": email_sent,
-        "email_id": get_element(name, 'email'),
+        "email_id": email,
         "email_from": str(config['mail']['id']),
         "cc": cc_email,
         "bcc": bcc_email,

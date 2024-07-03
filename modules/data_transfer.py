@@ -12,8 +12,8 @@ def transfer_data_to_database():
     files = get_file_names_excluding_file(path, yaml_file)
     # logging.info('No files' if not len(files) > 0 else there are files found in {path}')
     if len(files) > 0:
-        logging.info(f'Image files and {yaml_file} file found in {path}')
-        time.sleep(2)
+        logging.info(f'Image files and {yaml_file} file found in {path} and ready to be transferred to database')
+        # time.sleep(2)
         for file in files:
             wait_until_file_is_ready(file)
             file_name, file_extension = os.path.splitext(file)
@@ -30,7 +30,7 @@ def transfer_data_to_database():
                     populate_users(convertToBinaryData(os.path.join(path, file)), name, contact, email, '', '', '', '')
                     logging.info(f"Inserted data for {name}")
                     os.remove(os.path.join(path, file))
-                    logging.info(f'Removed the original file {os.path.join(path, file)}')
+                    logging.debug(f'Removed the original file {os.path.join(path, file)}')
                 except KeyError as error:
                     logging.error(f'Config key not found {error}')
                 except Exception as e:
