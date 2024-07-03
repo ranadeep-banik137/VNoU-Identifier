@@ -105,27 +105,63 @@ def generate_html_report(start_time):
     users_data = merge_users_data()
     total_users = len(users_data)
 
-    report_lines = ["<html>",
-                    "<head><title>User Identification Report</title></head>",
-                    "<body>",
-                    "<h1>User Identification Report</h1>",
-                    f"<p>Total Users Identified: {total_users}</p>",
-                    f"<p>Total Frames Captured: {get_total_app_frames()}</p>",
-                    f"<p>Start Time: {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}</p>",
-                    f"<p>End Time: {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}</p>",
-                    "<h2>User Details:</h2>",
-                    "<table border='1'><tr><th>ID</th><th>Name</th><th>Email ID</th><th>Total Appearances</th><th>Last Seen</th><th>Total Emails Sent</th><th>Last Emailed</th></tr>"]
+    report_lines = [
+        "<!DOCTYPE html>",
+        "<html lang='en'>",
+        "<head>",
+        "    <meta charset='UTF-8'>",
+        "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
+        "    <title>User Identification Report</title>",
+        "    <style>",
+        "        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }",
+        "        h1, h2 { color: #0056b3; }",
+        "        table { width: 100%; border-collapse: collapse; margin-top: 20px; }",
+        "        table, th, td { border: 1px solid #ddd; }",
+        "        th, td { padding: 12px; text-align: left; }",
+        "        th { background-color: #0056b3; color: white; }",
+        "        tr:nth-child(even) { background-color: #f9f9f9; }",
+        "        tr:hover { background-color: #f1f1f1; }",
+        "        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }",
+        "        .summary { margin-top: 20px; }",
+        "        .summary p { margin: 8px 0; }",
+        "    </style>",
+        "</head>",
+        "<body>",
+        "    <div class='container'>",
+        "        <h1>User Identification Report</h1>",
+        "        <div class='summary'>",
+        f"            <p><strong>Total Users Identified:</strong> {total_users}</p>",
+        f"            <p><strong>Total Frames Captured:</strong> {get_total_app_frames()}</p>",
+        f"            <p><strong>Start Time:</strong> {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}</p>",
+        f"            <p><strong>End Time:</strong> {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}</p>",
+        "        </div>",
+        "        <h2>User Details:</h2>",
+        "        <table>",
+        "            <tr>",
+        "                <th>ID</th>",
+        "                <th>Name</th>",
+        "                <th>Email ID</th>",
+        "                <th>Total Appearances</th>",
+        "                <th>Last Seen</th>",
+        "                <th>Total Emails Sent</th>",
+        "                <th>Last Emailed</th>",
+        "            </tr>"
+    ]
 
     for user, data in users_data.items():
         report_lines.append(f"<tr><td>{str(user)}</td><td>{data['username']}</td><td>{data['email_id']}</td><td>{data['appearance_count']}</td><td>{data['last_seen_at']}</td><td>{data['max_email_count']}</td><td>{data['last_email_sent_at']}</td></tr>")
 
-    report_lines.append("</table>")
-    report_lines.append("</body>")
-    report_lines.append("</html>")
+    report_lines.extend([
+        "        </table>",
+        "    </div>",
+        "</body>",
+        "</html>"
+    ])
 
     report_content = "\n".join(report_lines)
-    reporting_path = f"{config['reporting']['path']}/report.html"
+    reporting_path = f"{config['reporting']['path']}/report.html"  # Update this to your desired path
     make_dir_if_not_exist(reporting_path)
+
     # Save report to a file
     with open(reporting_path, 'w') as f:
         f.write(report_content)
