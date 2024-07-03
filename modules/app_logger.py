@@ -80,7 +80,7 @@ def log_transaction(frame_number, user_id, name, model, is_eligible_for_announce
         "total_visit_count": user_identification_data[match_index][3],
         "model": model,
         "is_repeated_user": not is_eligible_for_announcement,
-        "is_greeted": is_eligible_for_announcement
+        "name_announced": is_eligible_for_announcement
     }
 
     # Convert to JSON string

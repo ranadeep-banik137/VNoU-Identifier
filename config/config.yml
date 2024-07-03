@@ -1,4 +1,4 @@
-# Execution mode: options are 1. local 2. AWS-RDS
+# Execution mode: options are 1. local 2. AWS
 exec_mode: 'AWS'
 
 # MySQL credentials (Confidential file)
