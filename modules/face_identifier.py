@@ -6,7 +6,7 @@ import logging
 from modules.data_transfer import transfer_data_to_database
 from modules.face_readers import detect_face_angle_for_face, detect_blurry_variance, recognize_faces, detect_face_locations
 from modules.speech import play_speech
-from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_announcement, update_user_identification_cache
+from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_announcement, update_user_identification_cache, update_frame_counts
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction
 from modules.triggers import trigger_mail
@@ -36,6 +36,7 @@ def run_face_recognition():
         # threading.Thread(target=update_valid_till_for_expired).start()
         ret, frame = cap.read()
         frame_count += 1
+        update_frame_counts(frame_count)
         if frame_count % process_every_n_frames != 0:
             logging.warning(f'Index frame {frame_count} skipped')
             if cv2.waitKey(1) & 0xFF == ord('q'):

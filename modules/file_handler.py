@@ -34,7 +34,7 @@ def capture_face_img_with_face_marked(frame, name, face_locations):
     _, buffer = cv2.imencode('.jpg', frame)
     image_data = buffer.tobytes()
     image_name = f"VNoU_{name}.jpg"
-    if str(config['mail']['save-image-to-local']) == 'True':
+    if config['mail']['save-image-to-local']:
         capture_face_img(frame, img_name=image_name)
     return image_data, image_name
 

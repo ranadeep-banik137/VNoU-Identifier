@@ -34,6 +34,9 @@ def connect_server():
 
 def send_mail(receiver_email, cc_email='', bcc_email='', subject='', body='', images=[]):
     mail_sent_at = None
+    if not is_email_id_valid(receiver_email):
+        logging.warning(f'Mail ID found as {receiver_email} which is invalid. Skipping the mail')
+        return False, mail_sent_at
     # Create a multipart message and set headers
     message = MIMEMultipart()
     message["From"] = config['mail']['id']
@@ -90,3 +93,7 @@ def set_message_for_mail_with_binary_images(message, body, image_data_list=[]):
         part = MIMEImage(image_data, name=image_name)
         message.attach(part)
     return message
+
+
+def is_email_id_valid(email):
+    return not ('example.com' in email or email == '' or email is None)
