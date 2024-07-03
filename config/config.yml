@@ -1,6 +1,17 @@
+# Execution mode: options are 1. local 2. AWS
+exec_mode: 'AWS'
+
 # MySQL credentials (Confidential file)
-database:
+local_database:
   host: 'localhost'
+  port: '3306'
+  user: 'ranadeep'
+  password: 'rana#123'
+  db: 'profiles'
+
+# AWS-RDS credentials (Confidential file)
+database:
+  host: 'vnou-solutions.cj2amuwswmdg.ap-south-1.rds.amazonaws.com'
   port: '3306'
   user: 'ranadeep'
   password: 'rana#123'
@@ -10,9 +21,10 @@ mail:
   host: 'smtp.gmail.com'
   port: 587
   id: 'vnou.solutions@gmail.com'
-  password: 'vuyy bnte xxbq ujku'
+  password: 'kvpg xjcp jnbt zdxc'
   mail-password: 'VNoU#123'
-  delete-local-image: True
+  save-image-to-local: True
+  log-file-dir: 'logs/VNoU-email-logs.log'
 
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'
@@ -29,7 +41,7 @@ app_default:
 # Accuracy depends mainly on Camera & frame visibility
 face_recognition:
   camera-index: 0
-  frame-rate-range: 5
+  frame-rate-range: 2
   capture-unknown-face: False
   voice-command-expiry: 3600
   delete-img-similarity-percentage: 90
@@ -51,3 +63,9 @@ files:
 face_config:
   img-blur-threshold-percentage: 20
   img-tilt-threshold-angle: 10
+
+# Reporting types are 1. CSV 2. TEXT 3. HTML
+# If you select all, it means it will create all the above types of report
+reporting:
+  path: 'reports'
+  type: 'all'

@@ -1,5 +1,7 @@
 import os
 import logging
+import time
+import mysql.connector as mysql_connector
 from modules.config_reader import read_config
 from mysql.connector import pooling
 from constants.db_constansts import insert_table_queries, create_table_queries, misc_queries
@@ -7,7 +9,7 @@ from constants.db_constansts import insert_table_queries, create_table_queries, 
 
 def create_pool():
     conf = read_config()
-    db_config = conf['database']
+    db_config = conf['local_database'] if str(conf['exec_mode']) == 'local' else conf['database']
     dbconfig = {
         "host": os.getenv('DB_HOST') or db_config['host'],
         "user": os.getenv('DB_USER') or db_config['user'],
@@ -18,6 +20,8 @@ def create_pool():
                                        pool_size=32,
                                        pool_reset_session=True,
                                        **dbconfig)
+    logging.debug(
+        f'Database connection created with host: {dbconfig["host"]}, port: 3306, database name: {dbconfig["database"]}')
     return pool
 
 
@@ -29,20 +33,50 @@ connection_pool = create_pool()
 # Pass your database name ,# username , password ,
 # hostname and port number
 def create_connection():
-    host = os.getenv('DB_HOST') or 'localhost'
-    user = os.getenv('DB_USER') or 'ranadeep'
-    password = os.getenv('DB_PASSWORD') or 'rana#123'
-    db = os.getenv('DB_NAME') or 'profiles'
-    logging.debug(
-        f'Database connection created with host: {host}, port: 3306, database name: {db}')
-    # conn = connector.connect(host=host,
-    #                         user=user,
-    #                         passwd=password,
-    #                         database=db)
-    conn = connection_pool.get_connection()
+    conn = None
+    try:
+        # connection_pool = create_pool()
+        conn = connection_pool.get_connection()
+    except Exception as err:
+        conn = create_connection_with_retry(err)
     curr = conn.cursor()
     curr.execute(misc_queries.SAFE_MODE % 0)
     return conn, curr
+
+
+def create_connection_with_retry(error, retries=3, delay=5):
+    for _ in range(retries):
+        try:
+            logging.info(f'Retrying to connect to database as we have caught an error: {error}')
+            # connect_pool = create_pool()
+            return connection_pool.get_connection()
+        except mysql_connector.errors.PoolError:
+            time.sleep(delay)
+    raise Exception("Failed to get a connection from the pool after retries.")
+
+
+def create_trigger():
+    trigger_sql = """CREATE TRIGGER update_identification_records_trigger
+    BEFORE UPDATE ON identification_records
+    FOR EACH ROW
+    BEGIN
+        IF NEW.valid_till < NOW() THEN
+            SET NEW.is_identified = 0;
+        END IF;
+    END;"""
+
+    conn, curr = create_connection()
+    try:
+        curr.execute(trigger_sql)
+        conn.commit()
+    except mysql_connector.Error as err:
+        if err.errno == 1304:  # Error code for trigger already exists
+            logging.info("Trigger already exists.")
+        else:
+            logging.error(f"Error while inserting trigger in database: {err}")
+    finally:
+        curr.close()
+        conn.close()
 
 
 def create_table(creation_query):

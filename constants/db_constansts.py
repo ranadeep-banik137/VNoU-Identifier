@@ -34,6 +34,7 @@ class insert_table_queries:
 class query_data:
     ID_FOR_NAME = """ SELECT userID from users where name = '%s' """
     EMAIL_FOR_ID = """ SELECT email from users where userID = '%s' """
+    ALL_USER_DETAILS_FOR_ID = """ SELECT * from users where userID = %s """
     ALL_FOR_NAME = """ SELECT * from users where name = '%s' """
     ALL_FOR_ID = """ SELECT * from identification_records where userID = %s """
     IS_IDENTIFIED_FOR_ID = """ SELECT is_identified from identification_records where userID = %s """

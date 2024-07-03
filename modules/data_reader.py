@@ -2,6 +2,8 @@ import os
 import shutil
 import logging
 import time
+import numpy as np
+import cv2
 
 
 def read_file(filename=f'{os.getenv("PROJECT_PATH") or ""}data/database.csv'):
@@ -37,6 +39,17 @@ def convert_binary_to_img(data, filename):
     with open(filename, "wb") as fh:
         fh.write(data)
     return filename
+
+
+def save_encoded_image_data(image_data, save_path):
+    # Convert bytes data to numpy array
+    nparr = np.frombuffer(image_data, np.uint8)
+
+    # Decode image array into an image
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    # Save the image to the specified path
+    cv2.imwrite(save_path, img)
 
 
 def remove_file(filename):
@@ -87,6 +100,25 @@ def fetch_first_element_in_tuple(tuple_data):
 
 
 def make_dir_if_not_exist(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory) and directory != '':
+        os.makedirs(directory)
     if not os.path.exists(file_path):
         with open(file_path, mode='w', newline='') as file:
             logging.debug(f'File at {file_path} created')
+
+
+def get_tuple_from_list_matching_column(tuple_list, column_val, column_index):
+    filtered_list = [item for item in tuple_list if item[column_index] == column_val]
+    return filtered_list[0] if filtered_list else None
+
+
+def get_tuple_index_from_list_matching_column(tuple_list, column_val, column_index):
+    index = None
+    index_incrementer = 0
+    for row in tuple_list:
+        if row[column_index] == column_val:
+            index = index_incrementer
+            break
+        index_incrementer += 1
+    return index

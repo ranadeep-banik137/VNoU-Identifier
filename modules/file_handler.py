@@ -11,13 +11,32 @@ from modules.config_reader import read_config
 config = read_config()
 
 
-def capture_face_img(frame, filepath=config['files']['save-unknown-image-filepath']):
+def capture_face_img(frame, filepath=config['files']['save-unknown-image-filepath'], img_name=None):
     file_name = re.sub("[^\w]", "_",
                        datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
-    write_file_name = f"{filepath}VNoU_{file_name}.jpg"
-    cv2.imwrite(f"{filepath}VNoU_{file_name}.jpg", frame)
+    write_file_name = f"{filepath}VNoU_{file_name}.jpg" if img_name is None else f"{filepath}{img_name}"
+    cv2.imwrite(write_file_name, frame)
     logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
     return write_file_name
+
+
+def capture_face_img_with_face_marked(frame, name, face_locations):
+    for face_location in face_locations:
+        top, right, bottom, left = face_location
+
+        # Draw rectangle around the face
+        cv2.rectangle(frame, (left, top), (right, bottom), (0, 155, 255), 2)
+        # landmarks = fr.face_landmarks(frame, [face_location])
+        # for facial_feature in landmarks[0].keys():
+        #    for point in landmarks[0][facial_feature]:
+        #        cv2.circle(frame, point, 0.5, (0, 155, 255), 0.5)  # Green circles for facial landmarks
+        cv2.putText(frame, name, (left, bottom + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 155, 255), 2)
+    _, buffer = cv2.imencode('.jpg', frame)
+    image_data = buffer.tobytes()
+    image_name = f"VNoU_{name}.jpg"
+    if config['mail']['save-image-to-local']:
+        capture_face_img(frame, img_name=image_name)
+    return image_data, image_name
 
 
 def delete_similar_images(filepath):
