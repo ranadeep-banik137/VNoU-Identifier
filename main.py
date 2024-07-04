@@ -1,5 +1,4 @@
 import time
-
 from modules.face_identifier import run_face_recognition
 from modules.database import create_table, update_table
 from modules.app_logger import set_log_handler

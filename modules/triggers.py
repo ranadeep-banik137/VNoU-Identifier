@@ -44,7 +44,7 @@ VNoU Team"""
     if is_email_id_valid(receiver_email):
         logging.info(f'Sending mail to {receiver_email} attaching {len(images)} image/images')
     mail_sent, mail_time = send_mail(receiver_email=receiver_email, cc_email=cc_email, bcc_email=bcc_email, subject=subject, body=body, images=images)
-    cache_email_reporting_items(_id=_id, name=name, email_id=receiver_email, is_email_sent=mail_sent, email_sent_at=mail_time)
+    cache_email_reporting_items(_id=_id, name=name, email_id=receiver_email, is_email_sent=mail_sent, email_sent_at=mail_time, img_data=images)
     if mail_sent:
         log_notification(user_id=_id, name=name, images=images, email=receiver_email, email_sent=mail_sent, cc_email=cc_email, bcc_email=bcc_email, subject=subject, mail_sent_at=mail_time)
         logging.debug(f'mail sent with body {body}')

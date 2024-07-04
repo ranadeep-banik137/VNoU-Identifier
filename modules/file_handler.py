@@ -39,7 +39,7 @@ def capture_face_img_with_face_marked(frame, name, face_locations):
     return image_data, image_name
 
 
-def delete_similar_images(filepath):
+def delete_similar_images(filepath=config['files']['save-unknown-image-filepath']):
     image_list = Load_Data().from_folder(folder_list=[filepath])
 
     # Sort image_list to ensure consistent order
