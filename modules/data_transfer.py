@@ -1,7 +1,7 @@
 import time
 import logging
 import os
-from modules.data_reader import get_file_names_excluding_file, wait_until_file_is_ready, convertToBinaryData
+from modules.data_reader import get_file_names_excluding_file, wait_until_file_is_ready, convertToBinaryData, make_dir_if_not_exist
 from modules.database import populate_users
 from modules.config_reader import read_config
 
@@ -9,6 +9,7 @@ from modules.config_reader import read_config
 def transfer_data_to_database():
     path = "gui/uploads/"  # Use your actual path here
     yaml_file = 'details.yml'
+    make_dir_if_not_exist(f'{path}{yaml_file}')
     files = get_file_names_excluding_file(path, yaml_file)
     # logging.info('No files' if not len(files) > 0 else there are files found in {path}')
     if len(files) > 0:
