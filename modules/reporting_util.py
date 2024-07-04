@@ -24,6 +24,7 @@ def merge_users_data():
         email_id = None
         last_email_sent_at = None
         max_email_count = None
+        last_image = None
         appearance_count = id_row[3]
         last_seen_at = id_row[1]
         match_index = get_tuple_index_from_list_matching_column(tuple_list=reporting_cache, column_index=0, column_val=user_id)
@@ -32,13 +33,15 @@ def merge_users_data():
             email_id = reporting_cache[match_index][2]
             last_email_sent_at = reporting_cache[match_index][3]
             max_email_count = reporting_cache[match_index][4]
+            last_image = reporting_cache[match_index][5]
         users_data[user_id] = {
             'username': user_name,
             'email_id': email_id,
             'last_email_sent_at': last_email_sent_at,
             'max_email_count': max_email_count,
             'appearance_count': appearance_count,
-            'last_seen_at': None if not last_seen_at else convert_epoch_to_timestamp(last_seen_at)
+            'last_seen_at': None if not last_seen_at else convert_epoch_to_timestamp(last_seen_at),
+            'last_image_path': last_image
         }
     return users_data
 
@@ -104,7 +107,7 @@ def generate_html_report(start_time):
     end_time = time.time()
     users_data = merge_users_data()
     total_users = len(users_data)
-
+    background_image_url = 'https://images.pexels.com/photos/23886066/pexels-photo-23886066/free-photo-of-desert.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
     report_lines = [
         "<!DOCTYPE html>",
         "<html lang='en'>",
@@ -113,17 +116,18 @@ def generate_html_report(start_time):
         "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
         "    <title>User Identification Report</title>",
         "    <style>",
-        "        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }",
+        f"        body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background: url('{background_image_url}') no-repeat center center fixed; background-size: cover; color: #333; }}",
         "        h1, h2 { color: #0056b3; }",
         "        table { width: 100%; border-collapse: collapse; margin-top: 20px; }",
         "        table, th, td { border: 1px solid #ddd; }",
         "        th, td { padding: 12px; text-align: left; }",
         "        th { background-color: #0056b3; color: white; }",
-        "        tr:nth-child(even) { background-color: #f9f9f9; }",
-        "        tr:hover { background-color: #f1f1f1; }",
-        "        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }",
+        "        tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.8); }",
+        "        tr:hover { background-color: rgba(255, 255, 255, 0.9); }",
+        "        .container { width: auto; max-width: 800px; margin: auto; background: rgba(255, 255, 255, 0.9); padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; box-sizing: border-box; overflow-x: auto;}",
         "        .summary { margin-top: 20px; }",
         "        .summary p { margin: 8px 0; }",
+        "        img { max-width: 100px; cursor: pointer; }",  # Added styles for images
         "    </style>",
         "</head>",
         "<body>",
@@ -145,11 +149,12 @@ def generate_html_report(start_time):
         "                <th>Last Seen</th>",
         "                <th>Total Emails Sent</th>",
         "                <th>Last Emailed</th>",
+        "                <th>Last Captured Image</th>",
         "            </tr>"
     ]
 
     for user, data in users_data.items():
-        report_lines.append(f"<tr><td>{str(user)}</td><td>{data['username']}</td><td>{data['email_id']}</td><td>{data['appearance_count']}</td><td>{data['last_seen_at']}</td><td>{data['max_email_count']}</td><td>{data['last_email_sent_at']}</td></tr>")
+        report_lines.append(f"<tr><td>{str(user)}</td><td>{data['username']}</td><td>{data['email_id']}</td><td>{data['appearance_count']}</td><td>{data['last_seen_at']}</td><td>{data['max_email_count']}</td><td>{data['last_email_sent_at']}</td><td><a href='data:image/jpeg;base64,{data['last_image_path']}' download='{data['username']}{int(time.time())}.jpg' target='_blank'><img src='data:image/jpeg;base64,{data['last_image_path']}' alt='Image of {data['username']}'></a></td></tr>")
 
     report_lines.extend([
         "        </table>",

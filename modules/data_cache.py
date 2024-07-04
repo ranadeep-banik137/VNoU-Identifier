@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import time
@@ -120,16 +121,22 @@ def is_user_eligible_for_announcement(_id):
     return val
 
 
-def cache_email_reporting_items(_id, name, email_id, is_email_sent, email_sent_at):
+def cache_email_reporting_items(_id, name, email_id, is_email_sent, email_sent_at, img_data=[]):
     global reporting_data
     # tup = (_id, name, email_id, email_sent_at, email_count)
     e_list = get_tuple_from_list_matching_column(tuple_list=reporting_data, column_index=0, column_val=_id)
     email_count = 1 if is_email_sent else 0
+    # img_file = None Was kept for directly referring the images from repository. Instead, it is now encoded and added in html
+    base64_img = None
+    for img_binary, img_name in img_data:
+        # img = f'{config["files"]["save-unknown-image-filepath"]}{img_name}'
+        # img_file = f'/{img}' if os.path.exists(img) else None
+        base64_img = base64.b64encode(img_binary).decode('utf-8')
     if e_list is not None:
         match_index = get_tuple_index_from_list_matching_column(tuple_list=reporting_data, column_index=0, column_val=_id)
         email_count = reporting_data[match_index][4] + 1
         logging.debug(f'Cache has email records for userId: {reporting_data[match_index][0]}')
         reporting_data.pop(match_index)
         logging.debug(f'Email cache removed data for user: {name}')
-    reporting_data.append((_id, name, email_id, email_sent_at, email_count))
+    reporting_data.append((_id, name, email_id, email_sent_at, email_count, base64_img))
     logging.debug(f'Email cache list has data count for {len(reporting_data)} records after updating')
