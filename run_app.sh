@@ -13,4 +13,10 @@ pip install virtualenv
 virtualenv face_recognition_env
 #face_recognition_env\scripts\activate (Windows)
 source face_recognition_env/bin/activate
+
+# Install below package for ubuntu
+sudo apt update
+sudo apt install libgl1-mesa-glx
+
+
 nohup python3 main.py &
