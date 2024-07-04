@@ -1,9 +1,11 @@
+import logging
 import time
 from modules.face_identifier import run_face_recognition
 from modules.database import create_table, update_table
 from modules.app_logger import set_log_handler
 from constants.db_constansts import create_table_queries, update_data
 from modules.reporting_util import generate_reports
+from modules.file_handler import delete_similar_images
 
 
 def run_app():
@@ -25,4 +27,8 @@ if __name__ == '__main__':
         set_log_handler()
         run_app()
     except KeyboardInterrupt:
+        logging.debug('Keyboard action stopped the run')
+        logging.info('Wait a while for the clean up and report generation')
+    finally:  # Clean up files and generate reports after application is closed
+        delete_similar_images()
         generate_reports(start_time=start_time)
