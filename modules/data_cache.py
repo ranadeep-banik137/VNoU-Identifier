@@ -6,7 +6,7 @@ import cv2
 import face_recognition as fr
 from tqdm import tqdm
 from modules.database import fetch_table_data_in_tuples
-from modules.data_reader import convert_binary_to_img, remove_file, get_missing_items_from_tuple_list, get_tuple_from_list_matching_column, get_tuple_index_from_list_matching_column
+from modules.data_reader import convert_binary_to_img, remove_file, get_missing_items_from_tuple_list, get_tuple_from_list_matching_column, get_tuple_index_from_list_matching_column, make_dir_if_not_exist
 from modules.config_reader import read_config
 from modules.date_time_converter import convert_epoch_to_timestamp
 
@@ -61,7 +61,9 @@ def process_encoding(rows, desc='Encoding backend files'):
             _id = row[0]
             name = row[1]
             binary_img = row[2]
-            image_path = convert_binary_to_img(binary_img, f'{os.getenv("PROJECT_PATH") or ""}faces/{row[0]}_{name}.jpg')
+            file_path = f'faces/{row[0]}_{name}.jpg'
+            make_dir_if_not_exist(file_path)
+            image_path = convert_binary_to_img(binary_img, file_path)
             reference_image = fr.load_image_file(image_path)
             rgb_image = cv2.cvtColor(reference_image, cv2.COLOR_BGR2RGB)
             encodings = fr.face_encodings(rgb_image, fr.face_locations(rgb_image))
