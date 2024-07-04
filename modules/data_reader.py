@@ -1,9 +1,11 @@
+import base64
 import os
 import shutil
 import logging
 import time
 import numpy as np
 import cv2
+import requests
 
 
 def read_file(filename=f'{os.getenv("PROJECT_PATH") or ""}data/database.csv'):
@@ -39,6 +41,30 @@ def convert_binary_to_img(data, filename):
     with open(filename, "wb") as fh:
         fh.write(data)
     return filename
+
+
+def convert_img_to_base64(image_path):
+    # Open the image file in binary mode
+    with open(image_path, "rb") as image_file:
+        # Read the binary data
+        img_binary = image_file.read()
+        # Encode the binary data to base64
+        base64_img = base64.b64encode(img_binary).decode('utf-8')
+    return base64_img
+
+
+def convert_image_url_to_base64(image_url):
+    # Send a HTTP request to the URL to fetch the image
+    response = requests.get(image_url)
+    # Ensure the request was successful
+    if response.status_code == 200:
+        # Read the binary content of the response
+        img_binary = response.content
+        # Encode the binary data to base64
+        base64_img = base64.b64encode(img_binary).decode('utf-8')
+        return base64_img
+    else:
+        raise Exception(f"Failed to retrieve image from URL: {image_url}")
 
 
 def save_encoded_image_data(image_data, save_path):

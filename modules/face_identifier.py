@@ -10,7 +10,7 @@ from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction
 from modules.triggers import trigger_mail
-from modules.file_handler import capture_face_img, delete_similar_images, capture_face_img_with_face_marked
+from modules.file_handler import capture_face_img, capture_face_img_with_face_marked
 
 config = read_config()
 
@@ -88,5 +88,4 @@ def run_face_recognition():
                 break
             logging.warning('Frame not loaded correctly. Loading next frame..')
             continue
-        threading.Thread(target=delete_similar_images, args=(config['files']['save-unknown-image-filepath'],)).start()
     cap.release()

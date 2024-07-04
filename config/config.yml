@@ -18,6 +18,7 @@ database:
   db: 'profiles'
 
 mail:
+  enabled: False
   host: 'smtp.gmail.com'
   port: 587
   id: 'vnou.solutions@gmail.com'
@@ -49,7 +50,7 @@ face_recognition:
   face-recognition-model: 'VNoU'
   cache-expiry: 120
   frame-max-reset-seconds: 60
-  face-distance-threshold: 'Moderate'
+  face-distance-threshold: 'Strict'
 
 # Directory
 files:

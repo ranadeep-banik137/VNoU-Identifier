@@ -14,11 +14,14 @@ config = read_config()
 
 def trigger_mail(_id, name, images=[]):
     # _id = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name))
+    is_mail_enabled = config['mail']['enabled']
     receiver_email = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.EMAIL_FOR_ID % _id))  # 'ranadeep_banik@yahoo.com' for test purpose
+    if not is_mail_enabled:
+        logging.debug('Sending mail is not enabled in config. Cannot trigger mail')
+        cache_email_reporting_items(_id=_id, name=name, email_id=receiver_email, is_email_sent=False, email_sent_at=None)
+        return  # Choice of sending mails
     cc_email = ''
     bcc_email = ''
-    if _id <= 0:
-        pass
     # if not is_user_already_identified(name):
     img_text = """NB: Please provide confirmation if the image attached to the mail is yours.
     REPLY with 'yes, its me' or 'No, that is someone else'
