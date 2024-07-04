@@ -104,7 +104,7 @@ def generate_html_report(start_time):
     end_time = time.time()
     users_data = merge_users_data()
     total_users = len(users_data)
-
+    background_image_url = 'https://images.pexels.com/photos/23886066/pexels-photo-23886066/free-photo-of-desert.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
     report_lines = [
         "<!DOCTYPE html>",
         "<html lang='en'>",
@@ -113,7 +113,7 @@ def generate_html_report(start_time):
         "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
         "    <title>User Identification Report</title>",
         "    <style>",
-        "        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }",
+        f"        body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background: url('{background_image_url}') no-repeat center center fixed; background-size: cover; color: #333; }}",
         "        h1, h2 { color: #0056b3; }",
         "        table { width: 100%; border-collapse: collapse; margin-top: 20px; }",
         "        table, th, td { border: 1px solid #ddd; }",
