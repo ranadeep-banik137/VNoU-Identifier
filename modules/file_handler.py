@@ -7,6 +7,7 @@ import numpy as np
 from datetime import datetime
 from DeepImageSearch import Load_Data
 from modules.config_reader import read_config
+from modules.data_reader import make_dir_if_not_exist
 
 config = read_config()
 
@@ -15,6 +16,7 @@ def capture_face_img(frame, filepath=config['files']['save-unknown-image-filepat
     file_name = re.sub("[^\w]", "_",
                        datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
     write_file_name = f"{filepath}VNoU_{file_name}.jpg" if img_name is None else f"{filepath}{img_name}"
+    make_dir_if_not_exist(write_file_name)
     cv2.imwrite(write_file_name, frame)
     logging.debug(f"unidentified person's screen shot has been saved as VNoU_{file_name}.jpg")
     return write_file_name
