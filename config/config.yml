@@ -70,3 +70,4 @@ face_config:
 reporting:
   path: 'reports'
   type: 'all'
+  show-pics-without-email: True

@@ -15,10 +15,11 @@ config = read_config()
 def trigger_mail(_id, name, images=[]):
     # _id = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.ID_FOR_NAME % name))
     is_mail_enabled = config['mail']['enabled']
+    show_img_without_email = config['reporting']['show-pics-without-email']
     receiver_email = fetch_first_element_in_tuple(fetch_table_data_in_tuples('', query_data.EMAIL_FOR_ID % _id))  # 'ranadeep_banik@yahoo.com' for test purpose
     if not is_mail_enabled:
         logging.debug('Sending mail is not enabled in config. Cannot trigger mail')
-        cache_email_reporting_items(_id=_id, name=name, email_id=receiver_email, is_email_sent=False, email_sent_at=None)
+        cache_email_reporting_items(_id=_id, name=name, email_id=receiver_email, is_email_sent=False, email_sent_at=None, img_data=images if show_img_without_email else [])
         return  # Choice of sending mails
     cc_email = ''
     bcc_email = ''
