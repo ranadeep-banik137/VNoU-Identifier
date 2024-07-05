@@ -10,7 +10,7 @@ from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction
 from modules.triggers import trigger_mail
-from modules.file_handler import capture_face_img, capture_face_img_with_face_marked
+from modules.file_handler import capture_face_img, capture_face_img_with_face_marked_positions
 
 config = read_config()
 
@@ -54,6 +54,7 @@ def run_face_recognition():
                     continue
                 face_match_index_list = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
                 for (match_found, match_index), face in zip(face_match_index_list, face_locations):
+                    top, right, bottom, left = face
                     if match_found and not detect_blurry_variance(face):
                         name = names[match_index]
                         user_id = user_ids[match_index]
@@ -61,7 +62,7 @@ def run_face_recognition():
                         is_eligible_for_announcement = is_user_eligible_for_announcement(user_id)
                         if is_eligible_for_announcement:
                             speech_thread = threading.Thread(target=play_speech, args=(name,))
-                            mail_thread = threading.Thread(target=trigger_mail, args=(user_id, name, [capture_face_img_with_face_marked(frame, name, face_locations)]))
+                            mail_thread = threading.Thread(target=trigger_mail, args=(user_id, name, [capture_face_img_with_face_marked_positions(frame, name, top, right, bottom, left)]))
                             speech_thread.start()
                             mail_thread.start()
                             speech_thread.join()
