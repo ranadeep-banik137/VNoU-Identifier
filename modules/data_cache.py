@@ -48,9 +48,11 @@ def process_db_data():
         cache_last_updated = time.time()
         user_id, reference_encodings, names = process_encoding(cached_data)
     if time.time() - cache_last_updated > cache_expiry_secs:
-        missing_elements = get_missing_items_from_tuple_list(cached_data, fetch_table_data_in_tuples())
+        next_update_cache = fetch_table_data_in_tuples()
+        missing_elements = get_missing_items_from_tuple_list(cached_data, next_update_cache)
         if missing_elements:
             user_id, reference_encodings, names = process_encoding(missing_elements, 'Encoding missing data files to cache')
+            cached_data = next_update_cache
         cache_last_updated = time.time()
 
 
