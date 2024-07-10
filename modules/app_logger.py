@@ -124,3 +124,22 @@ def set_attachments_in_log(images):
             image["image_title"] = image_name
         image_list.append(image)
     return image_list
+
+
+def log_unknown_notification(frame_number, model, is_detected, is_saved, images, filename=config['app_default']['log-file-dir_unknown']):
+    current_time = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
+    unknown_notifications = {
+        "timestamp": serialize_datetime(current_time),
+        "frame_number": frame_number,
+        "model": model,
+        "is_person_detected": is_detected,
+        "is_img_saved_in_local": is_saved
+    }
+    if is_detected and is_saved:
+        unknown_notifications['image_link'] = f'{images}'
+    json_str = json.dumps(unknown_notifications, separators=(',', ':'))
+
+    make_dir_if_not_exist(filename)
+    # Append JSON string to the specified text file
+    with open(filename, 'a') as file:
+        file.write(json_str + '\n')

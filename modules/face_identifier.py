@@ -8,7 +8,7 @@ from modules.face_readers import detect_face_angle_for_face, detect_blurry_varia
 from modules.speech import play_speech
 from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_announcement, update_user_identification_cache, update_frame_counts
 from modules.config_reader import read_config
-from modules.app_logger import log_transaction
+from modules.app_logger import log_transaction, log_unknown_notification
 from modules.triggers import trigger_mail
 from modules.file_handler import capture_face_img, capture_face_img_with_face_marked_positions
 
@@ -73,10 +73,14 @@ def run_face_recognition():
                         log_thread.start()
                         continue
                     else:
-                        if os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face']):
-                            capture_face_img(frame)
+                        saved_img = None
+                        save_img = os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face'])
+                        if save_img:
+                            saved_img = capture_face_img(frame)
+                        threading.Thread(target=log_unknown_notification, args=(frame_count, face_detect_model, True, save_img, saved_img,)).start()
             else:
                 logging.info('No face detected')
+                threading.Thread(target=log_unknown_notification, args=(frame_count, face_detect_model, False, False, None,)).start()
                 continue
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
