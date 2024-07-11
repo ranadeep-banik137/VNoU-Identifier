@@ -7,7 +7,7 @@ from modules.config_reader import read_config
 from modules.database import fetch_table_data_in_tuples
 from constants.db_constansts import query_data
 from modules.data_reader import make_dir_if_not_exist, get_tuple_index_from_list_matching_column
-from modules.data_cache import get_identification_cache
+from modules.data_cache import get_identification_cache, get_frame_cache
 from modules.date_time_converter import convert_epoch_to_timestamp
 
 config = read_config()
@@ -124,3 +124,43 @@ def set_attachments_in_log(images):
             image["image_title"] = image_name
         image_list.append(image)
     return image_list
+
+
+def log_unknown_notification(frame_number, model, is_saved, images, filename=config['app_default']['log-file-dir_unknown']):
+    if frame_number > 0:
+        current_time = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
+        frame_cache = get_frame_cache()
+        match_index = get_tuple_index_from_list_matching_column(tuple_list=frame_cache, column_val=frame_number, column_index=0)
+        is_detected = frame_cache[match_index][1]
+        if match_index is not None or match_index != '':
+            reason = frame_cache[match_index][2]
+            match reason:
+                case 'INVALID':
+                    str_reason = 'Frame Invalid'
+                case 'TILT':
+                    str_reason = 'Face Tilted'
+                case 'BLUR':
+                    str_reason = 'Image Blurred'
+                case 'SKIP':
+                    str_reason = 'Frame Skipped'
+                case 'NIL':
+                    str_reason = 'No Face Detected'
+                case _:
+                    str_reason = 'Valid Frame'
+        unknown_notifications = {
+            "timestamp": serialize_datetime(current_time),
+            "frame_number": frame_number,
+            "model": model,
+            "is_person_detected": is_detected,
+            "is_img_saved_in_local": is_saved,
+            "unidentified_reason": str_reason
+        }
+        if is_saved and images is not None:
+            unknown_notifications['image_link'] = f'{images}'
+        if str_reason != 'Valid Frame':
+            json_str = json.dumps(unknown_notifications, separators=(',', ':'))
+
+            make_dir_if_not_exist(filename)
+            # Append JSON string to the specified text file
+            with open(filename, 'a') as file:
+                file.write(json_str + '\n')

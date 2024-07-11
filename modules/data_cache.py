@@ -22,6 +22,7 @@ latest_data = []
 identification_data = []
 reporting_data = []
 total_frame_count = 0
+frame_data = []
 cache_expiry_secs = int(os.getenv('CACHE_EXPIRATION_IN_SECONDS', config['face_recognition']['cache-expiry']))
 
 
@@ -48,9 +49,11 @@ def process_db_data():
         cache_last_updated = time.time()
         user_id, reference_encodings, names = process_encoding(cached_data)
     if time.time() - cache_last_updated > cache_expiry_secs:
-        missing_elements = get_missing_items_from_tuple_list(cached_data, fetch_table_data_in_tuples())
+        next_update_cache = fetch_table_data_in_tuples()
+        missing_elements = get_missing_items_from_tuple_list(cached_data, next_update_cache)
         if missing_elements:
             user_id, reference_encodings, names = process_encoding(missing_elements, 'Encoding missing data files to cache')
+            cached_data = next_update_cache
         cache_last_updated = time.time()
 
 
@@ -91,6 +94,10 @@ def get_reporting_cache():
 
 def get_total_app_frames():
     return total_frame_count
+
+
+def get_frame_cache():
+    return frame_data
 
 
 def update_frame_counts(count):
@@ -142,3 +149,8 @@ def cache_email_reporting_items(_id, name, email_id, is_email_sent, email_sent_a
         logging.debug(f'Email cache removed data for user: {name}')
     reporting_data.append((_id, name, email_id, email_sent_at if is_email_sent else None, email_count, base64_img))
     logging.debug(f'Email cache list has data count for {len(reporting_data)} records after updating')
+
+
+def cache_frame_data(frame_number, is_detected, reason=''):
+    global frame_data
+    frame_data.append((frame_number, is_detected, reason))

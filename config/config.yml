@@ -32,6 +32,7 @@ app_default:
   log-level: 'INFO'
   log-formatter: '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
   log-file-dir: 'logs/VNoU-app-logs.log'
+  log-file-dir_unknown: 'logs/VNoU-unknown-logs.log'
   save-db-data-to-local: True
 
 # App arguments

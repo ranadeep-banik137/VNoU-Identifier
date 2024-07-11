@@ -48,6 +48,8 @@ def merge_users_data():
 
 def generate_csv_report(start_time):
     end_time = time.time()
+    total_time = int(end_time) - int(start_time)
+    frames = get_total_app_frames()
     users_data = merge_users_data()
     total_users = len(users_data)
     reporting_path = f"{config['reporting']['path']}/report.csv"
@@ -55,8 +57,9 @@ def generate_csv_report(start_time):
     with open(reporting_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['User Identification Report'])
+        writer.writerow(['Frame Rate', f'{round(frames / total_time)} fps'])
         writer.writerow(['Total Users Identified', total_users])
-        writer.writerow(['Total Frames Captured', get_total_app_frames()])
+        writer.writerow(['Total Frames Captured', frames])
         writer.writerow(['Start Time', datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')])
         writer.writerow(['End Time', datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')])
         writer.writerow([])  # Blank line
@@ -70,13 +73,16 @@ def generate_csv_report(start_time):
 
 def generate_text_report(start_time):
     end_time = time.time()
+    total_time = int(end_time) - int(start_time)
+    frames = get_total_app_frames()
     users_data = merge_users_data()
     total_users = len(users_data)
 
     report_lines = ["User Identification Report",
                     "=" * 25,
+                    f"Frame Rate: {round(frames / total_time)} fps",
                     f"Total Users Identified: {total_users}",
-                    f"Total Frames Captured: {get_total_app_frames()}",
+                    f"Total Frames Captured: {frames}",
                     f"Start Time: {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}",
                     f"End Time: {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}",
                     "\nUser Details:",
@@ -105,6 +111,8 @@ def generate_text_report(start_time):
 
 def generate_html_report(start_time):
     end_time = time.time()
+    total_time = int(end_time) - int(start_time)
+    frames = get_total_app_frames()
     users_data = merge_users_data()
     total_users = len(users_data)
     background_image_url = 'https://images.pexels.com/photos/23886066/pexels-photo-23886066/free-photo-of-desert.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
@@ -134,8 +142,9 @@ def generate_html_report(start_time):
         "    <div class='container'>",
         "        <h1>User Identification Report</h1>",
         "        <div class='summary'>",
+        f"            <p><strong>Frame Rate:</strong> {round(frames / total_time)} fps</p>",
         f"            <p><strong>Total Users Identified:</strong> {total_users}</p>",
-        f"            <p><strong>Total Frames Captured:</strong> {get_total_app_frames()}</p>",
+        f"            <p><strong>Total Frames Captured:</strong> {frames}</p>",
         f"            <p><strong>Start Time:</strong> {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}</p>",
         f"            <p><strong>End Time:</strong> {datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}</p>",
         "        </div>",

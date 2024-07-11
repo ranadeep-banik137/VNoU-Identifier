@@ -30,5 +30,5 @@ if __name__ == '__main__':
         logging.debug('Keyboard action stopped the run')
         logging.info('Wait a while for the clean up and report generation')
     finally:  # Clean up files and generate reports after application is closed
-        delete_similar_images()
         generate_reports(start_time=start_time)
+        delete_similar_images()
