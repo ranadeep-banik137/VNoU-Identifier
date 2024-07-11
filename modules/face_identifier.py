@@ -40,7 +40,7 @@ def run_face_recognition():
         update_frame_counts(frame_count)
         if frame_count % frame_rate != 0:
             logging.warning(f'Index frame {frame_count} skipped')
-            cache_frame_data(frame_number=frame_count, is_detected=False, is_unknown_img_saved=is_unknown_img_saved, img_path=saved_img_path, reason='SKIP')
+            cache_frame_data(frame_number=frame_count, is_detected=False, is_unknown_img_saved=False, img_path=None, reason='SKIP')
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
             continue
@@ -77,7 +77,7 @@ def run_face_recognition():
                         log_thread = threading.Thread(target=log_transaction,
                                                       args=(frame_count, user_id, name, face_detect_model, is_eligible_for_announcement,))
                         log_thread.start()
-                        cache_frame_data(frame_number=frame_count, is_detected=face_detected, is_unknown_img_saved=False, img_path=None) # Defaulted
+                        cache_frame_data(frame_number=frame_count, is_detected=face_detected, is_unknown_img_saved=False, img_path=None)  # Defaulted
                     else:
                         is_unknown_img_saved, saved_img_path = save_img_to_local(frame, save_img)
                         cache_frame_data(frame_number=frame_count, is_detected=True, is_unknown_img_saved=is_unknown_img_saved, img_path=saved_img_path, reason='UNIDENTIFIED')
@@ -92,5 +92,4 @@ def run_face_recognition():
                 logging.error(f'Frame loading timed out after {frame_fail_count} seconds')
                 break
             logging.warning('Frame not loaded correctly. Loading next frame..')
-            # continue
     cap.release()
