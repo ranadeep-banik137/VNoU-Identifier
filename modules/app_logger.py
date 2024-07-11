@@ -145,6 +145,8 @@ def log_unknown_notification(frame_number, model, is_saved, images, filename=con
                     str_reason = 'Frame Skipped'
                 case 'NIL':
                     str_reason = 'No Face Detected'
+                case 'UNIDENTIFIED':
+                    str_reason = 'Face Not Identified'
                 case _:
                     str_reason = 'Valid Frame'
         unknown_notifications = {
