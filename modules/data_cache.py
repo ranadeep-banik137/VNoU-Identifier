@@ -22,6 +22,7 @@ latest_data = []
 identification_data = []
 reporting_data = []
 total_frame_count = 0
+frame_data = []
 cache_expiry_secs = int(os.getenv('CACHE_EXPIRATION_IN_SECONDS', config['face_recognition']['cache-expiry']))
 
 
@@ -95,6 +96,10 @@ def get_total_app_frames():
     return total_frame_count
 
 
+def get_frame_cache():
+    return frame_data
+
+
 def update_frame_counts(count):
     global total_frame_count
     total_frame_count = count
@@ -144,3 +149,8 @@ def cache_email_reporting_items(_id, name, email_id, is_email_sent, email_sent_a
         logging.debug(f'Email cache removed data for user: {name}')
     reporting_data.append((_id, name, email_id, email_sent_at if is_email_sent else None, email_count, base64_img))
     logging.debug(f'Email cache list has data count for {len(reporting_data)} records after updating')
+
+
+def cache_frame_data(frame_number, is_detected, reason=''):
+    global frame_data
+    frame_data.append((frame_number, is_detected, reason))
