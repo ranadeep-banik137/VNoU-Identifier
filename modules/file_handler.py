@@ -12,6 +12,15 @@ from modules.data_reader import make_dir_if_not_exist
 config = read_config()
 
 
+def save_img_to_local(frame, save_img):
+    is_saved = False
+    write_img_file_name = None
+    if save_img:
+        write_img_file_name = capture_face_img(frame)
+        is_saved = True
+    return is_saved, write_img_file_name
+
+
 def capture_face_img(frame, filepath=config['files']['save-unknown-image-filepath'], img_name=None):
     file_name = re.sub("[^\w]", "_",
                        datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))

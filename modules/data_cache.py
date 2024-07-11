@@ -151,6 +151,6 @@ def cache_email_reporting_items(_id, name, email_id, is_email_sent, email_sent_a
     logging.debug(f'Email cache list has data count for {len(reporting_data)} records after updating')
 
 
-def cache_frame_data(frame_number, is_detected, reason=''):
+def cache_frame_data(frame_number, is_detected, is_unknown_img_saved, img_path, reason=''):
     global frame_data
-    frame_data.append((frame_number, is_detected, reason))
+    frame_data.append((frame_number, is_detected, is_unknown_img_saved, img_path, reason))
