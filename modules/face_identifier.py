@@ -76,7 +76,7 @@ def run_face_recognition():
                         log_thread.start()
                         cache_frame_data(frame_number=frame_count, is_detected=face_detected)
                     else:
-                        cache_frame_data(frame_number=frame_count, is_detected=True, reason='BLUR')
+                        cache_frame_data(frame_number=frame_count, is_detected=True, reason='UNIDENTIFIED')
                         if save_img:
                             saved_img_path = capture_face_img(frame)
             else:
