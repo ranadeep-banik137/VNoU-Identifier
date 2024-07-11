@@ -3,6 +3,8 @@ import re
 import time
 import logging
 import os
+import random
+import string
 import numpy as np
 from datetime import datetime
 from DeepImageSearch import Load_Data
@@ -22,8 +24,10 @@ def save_img_to_local(frame, save_img):
 
 
 def capture_face_img(frame, filepath=config['files']['save-unknown-image-filepath'], img_name=None):
-    file_name = re.sub("[^\w]", "_",
+    curr_timestamp = re.sub("[^\w]", "_",
                        datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format']))
+    res = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
+    file_name = f"{curr_timestamp}_{res}"
     write_file_name = f"{filepath}VNoU_{file_name}.jpg" if img_name is None else f"{filepath}{img_name}"
     make_dir_if_not_exist(write_file_name)
     cv2.imwrite(write_file_name, frame)
