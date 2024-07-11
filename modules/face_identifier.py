@@ -10,7 +10,7 @@ from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_
 from modules.config_reader import read_config
 from modules.app_logger import log_transaction, log_unknown_notification
 from modules.triggers import trigger_mail
-from modules.file_handler import capture_face_img, capture_face_img_with_face_marked_positions
+from modules.file_handler import save_img_to_local, capture_face_img_with_face_marked_positions
 
 config = read_config()
 
@@ -21,6 +21,7 @@ def run_face_recognition():
     save_img = os.getenv('SAVE_UNKNOWN_FACE_IMAGE', face_config['capture-unknown-face'])
     face_detect_model = os.getenv('FACE_RECOGNITION_MODEL', face_config['face-recognition-model'])
     frame_rate = int(os.getenv('FRAME_RATE_RANGE', face_config['frame-rate-range']))  # Adjust this value to balance performance and accuracy
+    is_unknown_img_saved = False
     saved_img_path = None
     cap = cv2.VideoCapture(input_video_src if not input_video_src.isdigit() else int(input_video_src))
     logging.info(
@@ -30,7 +31,7 @@ def run_face_recognition():
     frame_fail_count = 0
     process_db_data()
     while True:
-        log_unknown_notification(frame_number=frame_count, model=face_detect_model, is_saved=save_img, images=saved_img_path)
+        log_unknown_notification(frame_number=frame_count, model=face_detect_model)
         transfer_data_to_database()
         threading.Thread(target=process_db_data()).start()
         user_ids, reference_encodings, names = get_cache()
@@ -39,7 +40,7 @@ def run_face_recognition():
         update_frame_counts(frame_count)
         if frame_count % frame_rate != 0:
             logging.warning(f'Index frame {frame_count} skipped')
-            cache_frame_data(frame_number=frame_count, is_detected=False, reason='SKIP')
+            cache_frame_data(frame_number=frame_count, is_detected=False, is_unknown_img_saved=is_unknown_img_saved, img_path=saved_img_path, reason='SKIP')
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
             continue
@@ -49,11 +50,13 @@ def run_face_recognition():
             if face_detected:
                 if detect_blurry_variance(frame):
                     logging.info('The frame is blurred. Retrying with next frame')
-                    cache_frame_data(frame_number=frame_count, is_detected=face_detected, reason='BLUR')
+                    is_unknown_img_saved, img_path = save_img_to_local(frame, save_img)
+                    cache_frame_data(frame_number=frame_count, is_detected=face_detected, is_unknown_img_saved=is_unknown_img_saved, img_path=img_path, reason='BLUR')
                     continue
                 if detect_face_angle_for_face(frame):
                     logging.info('The face seems tilted. Retrying for frontal detection')
-                    cache_frame_data(frame_number=frame_count, is_detected=face_detected, reason='TILT')
+                    is_unknown_img_saved, img_path = save_img_to_local(frame, save_img)
+                    cache_frame_data(frame_number=frame_count, is_detected=face_detected, is_unknown_img_saved=is_unknown_img_saved, img_path=img_path, reason='TILT')
                     continue
                 face_match_index_list = recognize_faces(frame, face_locations, reference_encodings, face_detect_model)
                 for (match_found, match_index), face in zip(face_match_index_list, face_locations):
@@ -74,17 +77,16 @@ def run_face_recognition():
                         log_thread = threading.Thread(target=log_transaction,
                                                       args=(frame_count, user_id, name, face_detect_model, is_eligible_for_announcement,))
                         log_thread.start()
-                        cache_frame_data(frame_number=frame_count, is_detected=face_detected)
+                        cache_frame_data(frame_number=frame_count, is_detected=face_detected, is_unknown_img_saved=False, img_path=None) # Defaulted
                     else:
-                        cache_frame_data(frame_number=frame_count, is_detected=True, reason='UNIDENTIFIED')
-                        if save_img:
-                            saved_img_path = capture_face_img(frame)
+                        is_unknown_img_saved, saved_img_path = save_img_to_local(frame, save_img)
+                        cache_frame_data(frame_number=frame_count, is_detected=True, is_unknown_img_saved=is_unknown_img_saved, img_path=saved_img_path, reason='UNIDENTIFIED')
             else:
                 logging.info('No face detected')
-                cache_frame_data(frame_number=frame_count, is_detected=face_detected, reason='NIL')
+                cache_frame_data(frame_number=frame_count, is_detected=face_detected, is_unknown_img_saved=False, img_path=None, reason='NIL')
         else:
             frame_fail_count += 1
-            cache_frame_data(frame_number=frame_count, is_detected=False, reason='INVALID')
+            cache_frame_data(frame_number=frame_count, is_detected=False, is_unknown_img_saved=False, img_path=None, reason='INVALID')
             if frame_fail_count > int(os.getenv('FRAME_MAX_RESET_COUNT', face_config['frame-max-reset-seconds'])):
                 time.sleep(0.5)  # Wait for 1 second
                 logging.error(f'Frame loading timed out after {frame_fail_count} seconds')

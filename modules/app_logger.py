@@ -126,14 +126,16 @@ def set_attachments_in_log(images):
     return image_list
 
 
-def log_unknown_notification(frame_number, model, is_saved, images, filename=config['app_default']['log-file-dir_unknown']):
+def log_unknown_notification(frame_number, model, filename=config['app_default']['log-file-dir_unknown']):
     if frame_number > 0:
         current_time = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
         frame_cache = get_frame_cache()
         match_index = get_tuple_index_from_list_matching_column(tuple_list=frame_cache, column_val=frame_number, column_index=0)
         is_detected = frame_cache[match_index][1]
+        is_saved = frame_cache[match_index][2]
+        images = frame_cache[match_index][3]
         if match_index is not None or match_index != '':
-            reason = frame_cache[match_index][2]
+            reason = frame_cache[match_index][4]
             match reason:
                 case 'INVALID':
                     str_reason = 'Frame Invalid'
