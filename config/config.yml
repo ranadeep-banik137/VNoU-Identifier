@@ -29,6 +29,7 @@ mail:
 
 app_default:
   timestamp-format: '%Y-%m-%d %H:%M:%S'
+  log-directory: 'logs'
   log-level: 'INFO'
   log-formatter: '%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
   log-file-dir: 'logs/VNoU-app-logs.log'
@@ -55,6 +56,7 @@ face_recognition:
 
 # Directory
 files:
+  clear-cache-before-run: True
   save-unknown-image-filepath: 'captured/'
   incoming-img-filepath: 'gui/uploads'
 

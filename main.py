@@ -6,6 +6,7 @@ from modules.app_logger import set_log_handler
 from constants.db_constansts import create_table_queries, update_data
 from modules.reporting_util import generate_reports
 from modules.file_handler import delete_similar_images
+from modules.cleanup import clean_system_cache
 
 
 def run_app():
@@ -22,6 +23,7 @@ def initiate_data_tables():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     start_time = time.time()
+    clean_system_cache()
     try:
         initiate_data_tables()
         set_log_handler()
