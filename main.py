@@ -25,7 +25,7 @@ if __name__ == '__main__':
     start_time = time.time()
     clean_system_cache()
     try:
-        initiate_data_tables()
+        # initiate_data_tables() Commented as users data is transferred using other app
         set_log_handler()
         run_app()
     except KeyboardInterrupt:
