@@ -7,7 +7,7 @@ import pyttsx3
 from gtts import gTTS
 from playsound import playsound
 from googletrans import Translator
-from modules.database import fetch_table_data_in_tuples, populate_identification_record
+from modules.database import fetch_table_data_in_tuples
 from constants.db_constansts import query_data
 from modules.config_reader import read_config
 from pydub import AudioSegment

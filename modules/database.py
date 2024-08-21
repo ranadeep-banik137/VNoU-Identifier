@@ -55,30 +55,6 @@ def create_connection_with_retry(error, retries=3, delay=5):
     raise Exception("Failed to get a connection from the pool after retries.")
 
 
-def create_trigger():
-    trigger_sql = """CREATE TRIGGER update_identification_records_trigger
-    BEFORE UPDATE ON identification_records
-    FOR EACH ROW
-    BEGIN
-        IF NEW.valid_till < NOW() THEN
-            SET NEW.is_identified = 0;
-        END IF;
-    END;"""
-
-    conn, curr = create_connection()
-    try:
-        curr.execute(trigger_sql)
-        conn.commit()
-    except mysql_connector.Error as err:
-        if err.errno == 1304:  # Error code for trigger already exists
-            logging.info("Trigger already exists.")
-        else:
-            logging.error(f"Error while inserting trigger in database: {err}")
-    finally:
-        curr.close()
-        conn.close()
-
-
 def create_table(creation_query):
     try:
         # Get the cursor object from the connection object
@@ -130,29 +106,6 @@ def populate_users(file, name, contact='', email='', address='', city='', state=
         pass
 
 
-def populate_identification_record(userID, is_identified, time, valid_till, visit_count=0):
-    try:
-        # Read database configuration
-        conn, cursor = create_connection()
-        try:
-            create_table(create_table_queries.IDENTIFICATION_RECORDS)
-            # Execute the INSERT statement
-            query = insert_table_queries.IDENTIFICATION_RECORDS % (userID, is_identified, time, valid_till, visit_count)
-            logging.debug(f'Query inserted: {query}')
-            cursor.execute(query)
-            # Commit the changes to the database
-            conn.commit()
-        except Exception as error:
-            logging.error("Error while inserting data in identification record table", error)
-        finally:
-            # Close the connection object
-            conn.close()
-    finally:
-        # Since we do not have to do
-        # anything here we will pass
-        pass
-
-
 def fetch_table_data_in_tuples(name='', query=None):
     try:
         # Read database configuration
@@ -161,11 +114,11 @@ def fetch_table_data_in_tuples(name='', query=None):
         try:
             # query = """ SELECT * from users where name = %s """
             if name == '' and query is None:
-                cursor.execute(""" SELECT * from users """)
+                cursor.execute(""" SELECT * from identifiers """)
             elif query is not None:
                 cursor.execute(query)
             else:
-                cursor.execute(f"""" SELECT * from users where name = {name} """"")
+                cursor.execute(f"""" SELECT * from identifiers where Name = {name} """"")
             # Fetch all the records in tuple
             records = cursor.fetchall()
 
@@ -186,7 +139,7 @@ def fetch_last_user_id():
         # Read database configuration
         conn, cursor = create_connection()
         try:
-            cursor.execute("SELECT userID FROM users ORDER BY userID DESC LIMIT 1")
+            cursor.execute("SELECT CustID FROM identifiers ORDER BY CustID DESC LIMIT 1")
 
             for (userID,) in cursor:
                 last_record = int(userID)

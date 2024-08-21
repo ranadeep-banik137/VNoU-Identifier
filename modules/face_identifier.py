@@ -3,7 +3,6 @@ import cv2
 import os
 import time
 import logging
-from modules.data_transfer import transfer_data_to_database
 from modules.face_readers import detect_face_angle_for_face, detect_blurry_variance, recognize_faces, detect_face_locations
 from modules.speech import play_speech
 from modules.data_cache import process_db_data, get_cache, is_user_eligible_for_announcement, update_user_identification_cache, update_frame_counts, cache_frame_data
@@ -32,7 +31,6 @@ def run_face_recognition():
     process_db_data()
     while True:
         log_unknown_notification(frame_number=frame_count, model=face_detect_model)
-        # transfer_data_to_database()
         threading.Thread(target=process_db_data()).start()
         user_ids, reference_encodings, names = get_cache()
         ret, frame = cap.read()

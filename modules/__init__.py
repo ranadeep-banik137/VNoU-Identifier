@@ -9,7 +9,6 @@ from .database import *
 from .date_time_converter import *
 from .event_data_handler import *
 from .exportdb import *
-from .image_identifier import *
 from .config_reader import *
 
 
