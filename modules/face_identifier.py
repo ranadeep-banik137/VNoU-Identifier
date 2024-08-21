@@ -32,7 +32,7 @@ def run_face_recognition():
     process_db_data()
     while True:
         log_unknown_notification(frame_number=frame_count, model=face_detect_model)
-        transfer_data_to_database()
+        # transfer_data_to_database()
         threading.Thread(target=process_db_data()).start()
         user_ids, reference_encodings, names = get_cache()
         ret, frame = cap.read()
