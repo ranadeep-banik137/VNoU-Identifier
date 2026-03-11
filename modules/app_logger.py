@@ -130,27 +130,36 @@ def log_unknown_notification(frame_number, model, filename=config['app_default']
     if frame_number > 0:
         current_time = datetime.fromtimestamp(time.time()).strftime(config['app_default']['timestamp-format'])
         frame_cache = get_frame_cache()
-        match_index = get_tuple_index_from_list_matching_column(tuple_list=frame_cache, column_val=frame_number, column_index=0)
-        is_detected = frame_cache[match_index][1]
-        is_saved = frame_cache[match_index][2]
-        images = frame_cache[match_index][3]
-        if match_index is not None or match_index != '':
-            reason = frame_cache[match_index][4]
-            match reason:
-                case 'INVALID':
-                    str_reason = 'Frame Invalid'
-                case 'TILT':
-                    str_reason = 'Face Tilted'
-                case 'BLUR':
-                    str_reason = 'Image Blurred'
-                case 'SKIP':
-                    str_reason = 'Frame Skipped'
-                case 'NIL':
-                    str_reason = 'No Face Detected'
-                case 'UNIDENTIFIED':
-                    str_reason = 'Face Not Identified'
-                case _:
-                    str_reason = 'Valid Frame'
+        if not frame_cache:
+            return
+
+        # Fast path: we append frame entries in order, so the latest record should match.
+        record = frame_cache[-1] if frame_cache[-1][0] == frame_number else None
+        if record is None:
+            match_index = get_tuple_index_from_list_matching_column(tuple_list=frame_cache, column_val=frame_number, column_index=0)
+            if match_index is None:
+                return
+            record = frame_cache[match_index]
+
+        is_detected = record[1]
+        is_saved = record[2]
+        images = record[3]
+        reason = record[4]
+        match reason:
+            case 'INVALID':
+                str_reason = 'Frame Invalid'
+            case 'TILT':
+                str_reason = 'Face Tilted'
+            case 'BLUR':
+                str_reason = 'Image Blurred'
+            case 'SKIP':
+                str_reason = 'Frame Skipped'
+            case 'NIL':
+                str_reason = 'No Face Detected'
+            case 'UNIDENTIFIED':
+                str_reason = 'Face Not Identified'
+            case _:
+                str_reason = 'Valid Frame'
         unknown_notifications = {
             "timestamp": serialize_datetime(current_time),
             "frame_number": frame_number,

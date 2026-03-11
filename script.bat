@@ -2,7 +2,7 @@
 echo Starting the application....
 
 :: setx LOG_LEVEL "INFO"
-:: setx CAMERA_INDEX 0
+:: setx CAMERA_INDEX "rtsp://rana123:rana130393@192.168.29.247:554/stream1"
 :: setx FRAME_RATE_RANGE 5
 :: setx FACE_RECOGNITION_MODEL "cnn"
 :: setx CACHE_EXPIRATION_IN_SECONDS 10800

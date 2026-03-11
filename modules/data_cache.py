@@ -154,3 +154,8 @@ def cache_email_reporting_items(_id, name, email_id, is_email_sent, email_sent_a
 def cache_frame_data(frame_number, is_detected, is_unknown_img_saved, img_path, reason=''):
     global frame_data
     frame_data.append((frame_number, is_detected, is_unknown_img_saved, img_path, reason))
+    # Prevent unbounded growth; older entries are only used for sequential "last frame" logging.
+    max_frames = int(os.getenv('FRAME_CACHE_MAX', 5000))
+    if max_frames > 0 and len(frame_data) > max_frames:
+        # Drop a chunk to avoid O(n) popping one-by-one.
+        del frame_data[:1000]

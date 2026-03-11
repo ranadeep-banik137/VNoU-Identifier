@@ -7,6 +7,25 @@ from modules.config_reader import read_config
 
 config = read_config()
 
+_MTCNN_DETECTOR = None
+_HAAR_CASCADE = None
+
+
+def _get_mtcnn_detector():
+    global _MTCNN_DETECTOR
+    if _MTCNN_DETECTOR is None:
+        _MTCNN_DETECTOR = MTCNN()
+    return _MTCNN_DETECTOR
+
+
+def _get_haar_cascade():
+    global _HAAR_CASCADE
+    if _HAAR_CASCADE is None:
+        _HAAR_CASCADE = cv2.CascadeClassifier(
+            cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        )
+    return _HAAR_CASCADE
+
 
 def is_face_stable(frame, face_locations, threshold=10):
     landmarks = fr.face_landmarks(frame, [face_locations[0]])[0]
@@ -42,7 +61,8 @@ def calculate_face_angle(left_eye_center, right_eye_center):
 def detect_blurry_variance(frame):
     is_face_blurred = False
     blur_threshold = int(config['face_config']['img-blur-threshold-percentage'])
-    variance = cv2.Laplacian(frame, cv2.CV_64F).var()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if len(frame.shape) == 3 else frame
+    variance = cv2.Laplacian(gray, cv2.CV_64F).var()
     if variance < blur_threshold:
         is_face_blurred = True
         logging.info("Face is blurred or not properly detected. Please stand still for better detection")
@@ -117,7 +137,7 @@ def detect_face_locations(image, model):
     face_locations = None
     match model:
         case 'mtcnn':
-            detector = MTCNN()
+            detector = _get_mtcnn_detector()
             frame = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             faces = detector.detect_faces(frame)
             # detect_face_angle(faces)
@@ -127,7 +147,9 @@ def detect_face_locations(image, model):
         case 'cascade':
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             gray = cv2.equalizeHist(gray)
-            faces = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml').detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            faces = _get_haar_cascade().detectMultiScale(
+                gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
+            )
             face_locations = []
             for (x, y, w, h) in faces:
                 face_locations.append((y, x + w, y + h, x))

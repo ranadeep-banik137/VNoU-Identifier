@@ -1,5 +1,5 @@
 # Execution mode: options are 1. local 2. AWS
-exec_mode: 'AWS'
+exec_mode: 'local'
 
 # MySQL credentials (Confidential file)
 local_database:
@@ -23,7 +23,7 @@ mail:
   port: 587
   id: 'vnou.solutions@gmail.com'
   password: 'kvpg xjcp jnbt zdxc'
-  mail-password: 'VNoU#123'
+  mail-password: 'VNoU#1234'
   save-image-to-local: True
   log-file-dir: 'logs/VNoU-email-logs.log'
 
